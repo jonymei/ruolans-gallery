@@ -21,6 +21,7 @@ const { story } = Astro.props;
     <div class="header-title-container">
       <h1 class="story-title" title={story.config.title}>{story.config.title}</h1>
     </div>
+    <div class="header-spacer"></div>
   </header>
 
   <!-- 故事内容 -->
@@ -73,11 +74,11 @@ const { story } = Astro.props;
     z-index: 10;
     display: flex;
     align-items: center;
+    justify-content: space-between;
     padding: 0.75rem 1rem;
     background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(8px);
     border-bottom: 1px solid rgba(236, 72, 153, 0.2);
-    gap: 0.75rem;
   }
 
   .back-btn {
@@ -88,13 +89,16 @@ const { story } = Astro.props;
     text-decoration: none;
     font-size: 0.9rem;
     font-weight: 500;
-    flex-shrink: 0;
   }
 
   .header-title-container {
     flex-grow: 1;
-    overflow: hidden;
     text-align: center;
+    /* Ensure the title container is centered by placing it in the middle */
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%; /* Adjust width to prevent overlap */
   }
 
   .story-title {
@@ -104,6 +108,10 @@ const { story } = Astro.props;
     overflow: hidden;
     text-overflow: ellipsis;
     margin: 0;
+  }
+
+  .header-spacer {
+    visibility: hidden;
   }
 
   /* 内容区域 */
