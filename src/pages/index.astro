@@ -1,11 +1,96 @@
 ---
-import Welcome from '../components/Welcome.astro';
 import Layout from '../layouts/Layout.astro';
+import Navigation from '../components/Navigation.astro';
+import HeroSection from '../components/HeroSection.astro';
+import StoryCard from '../components/StoryCard.astro';
+import { getAllStories } from '../lib/stories';
 
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+// 获取所有故事数据
+const stories = await getAllStories();
 ---
 
-<Layout>
-	<Welcome />
+<Layout 
+  title="若兰的AI故事书集锦" 
+  description="欢迎来到6岁女孩若兰的神奇世界！这里收录了她创作的AI故事书，每一个故事都充满了童真与想象力。"
+>
+  <!-- 导航栏 -->
+  <Navigation />
+  
+  <!-- 欢迎区域 -->
+  <HeroSection />
+  
+  <!-- 故事列表 -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+    <!-- 区域标题 -->
+    <div class="text-center mb-12">
+      <h2 class="text-3xl font-bold text-gray-800 mb-4">
+        ✨ 精彩故事集锦 ✨
+      </h2>
+      <p class="text-gray-600 max-w-2xl mx-auto">
+        每个故事都是若兰想象力的结晶，结合AI技术创作的奇妙冒险。
+        点击封面开始阅读，体验有声书的魅力吧！
+      </p>
+    </div>
+    
+    <!-- 故事网格 -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-8">
+      {stories.map((story) => (
+        <StoryCard story={story} />
+      ))}
+    </div>
+    
+    <!-- 底部提示 -->
+    <div class="text-center mt-16">
+      <div class="inline-flex items-center px-6 py-3 bg-white/60 backdrop-blur-sm rounded-full shadow-sm border border-pink-100">
+        <svg class="w-5 h-5 text-pink-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+        </svg>
+        <span class="text-sm text-gray-600">
+          更多精彩故事正在创作中，敬请期待...
+        </span>
+      </div>
+    </div>
+  </main>
+  
+  <!-- 页脚 -->
+  <footer class="bg-white/40 backdrop-blur-sm border-t border-pink-100 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center">
+        <p class="text-gray-500 text-sm">
+          ❤️ 由若兰创作，充满爱与想象力的故事世界 ❤️
+        </p>
+        <p class="text-gray-400 text-xs mt-2">
+          © 2025 若兰的AI故事书集锦. 保留所有权利.
+        </p>
+      </div>
+    </div>
+  </footer>
 </Layout>
+
+<style>
+  /* 添加一些页面特定的样式 */
+  main {
+    min-height: 60vh;
+  }
+  
+  /* 网格动画效果 */
+  .grid > * {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInUp 0.6s ease-out forwards;
+  }
+  
+  .grid > *:nth-child(1) { animation-delay: 0.1s; }
+  .grid > *:nth-child(2) { animation-delay: 0.2s; }
+  .grid > *:nth-child(3) { animation-delay: 0.3s; }
+  .grid > *:nth-child(4) { animation-delay: 0.4s; }
+  .grid > *:nth-child(5) { animation-delay: 0.5s; }
+  .grid > *:nth-child(6) { animation-delay: 0.6s; }
+  
+  @keyframes fadeInUp {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+</style>

@@ -1,0 +1,99 @@
+---
+import type { Story } from '../lib/stories';
+
+interface Props {
+  story: Story;
+}
+
+const { story } = Astro.props;
+
+// 直接使用相对路径，Astro会处理资源
+const coverImageSrc = story.images.cover.replace('/src', '');
+---
+
+<div class="story-card group cursor-pointer">
+  <a href={`/story/${story.id}`} class="block h-full">
+    <div class="bg-white rounded-2xl shadow-md overflow-hidden h-full flex flex-col transition-all duration-300 group-hover:shadow-xl group-hover:scale-105">
+      <!-- 封面图片 -->
+      <div class="aspect-[3/4] overflow-hidden">
+        <img 
+          src={coverImageSrc}
+          alt={story.config.title}
+          class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+          loading="lazy"
+        />
+      </div>
+      
+      <!-- 故事信息 -->
+      <div class="p-6 flex-1 flex flex-col">
+        <!-- 标题 -->
+        <h3 class="text-xl font-bold text-gray-800 mb-2 line-clamp-2 group-hover:text-pink-600 transition-colors">
+          {story.config.title}
+        </h3>
+        
+        <!-- 作者 -->
+        <div class="text-sm text-gray-500 mb-3">
+          <span class="inline-flex items-center">
+            <svg class="w-4 h-4 mr-1 text-pink-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+            </svg>
+            作者：{story.config.author}
+          </span>
+        </div>
+        
+        <!-- 描述 -->
+        <p class="text-gray-600 text-sm mb-4 flex-1 line-clamp-3">
+          {story.config.description}
+        </p>
+        
+        <!-- 底部信息 -->
+        <div class="flex items-center justify-between">
+          <!-- 创作日期 -->
+          <span class="text-xs text-gray-400">
+            {new Date(story.config.createdDate).toLocaleDateString('zh-CN')}
+          </span>
+          
+          <!-- 标签 -->
+          {story.config.tags && story.config.tags.length > 0 && (
+            <div class="flex gap-1">
+              {story.config.tags.slice(0, 2).map(tag => (
+                <span class="px-2 py-1 bg-pink-100 text-pink-600 text-xs rounded-full">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+      
+      <!-- 悬浮效果装饰 -->
+      <div class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <div class="w-8 h-8 bg-pink-500 rounded-full flex items-center justify-center text-white">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </a>
+</div>
+
+<style>
+  .story-card {
+    position: relative;
+  }
+  
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+</style>
