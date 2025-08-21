@@ -94,6 +94,13 @@ export async function getAllStories(): Promise<Story[]> {
   } catch (error) {
     console.error('Error loading stories:', error);
   }
+
+  // 按创建日期倒序排序
+  stories.sort((a, b) => {
+    const dateA = new Date(a.config.createdDate);
+    const dateB = new Date(b.config.createdDate);
+    return dateB.getTime() - dateA.getTime();
+  });
   
   return stories;
 }
