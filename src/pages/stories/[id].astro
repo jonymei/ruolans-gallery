@@ -18,14 +18,33 @@ if (!story) {
   return Astro.redirect('/404');
 }
 
-const userAgent = Astro.request.headers.get('user-agent') || '';
-const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
 ---
 
 <Layout title={story.config.title}>
-  {isMobile ? (
-    <MobileStoryReader story={story} />
-  ) : (
-    <DesktopStoryReader story={story} />
-  )}
+  <div id="story-container">
+    <!-- 默认显示桌面版，通过客户端JS切换 -->
+    <div id="desktop-reader">
+      <DesktopStoryReader story={story} />
+    </div>
+    <div id="mobile-reader" style="display: none;">
+      <MobileStoryReader story={story} />
+    </div>
+  </div>
 </Layout>
+
+<script>
+  import { isMobile } from '../../lib/device';
+  
+  // 在客户端检测设备类型
+  const isMobileDevice = isMobile();
+  const desktopReader = document.getElementById('desktop-reader');
+  const mobileReader = document.getElementById('mobile-reader');
+  
+  if (isMobileDevice) {
+    if (desktopReader) desktopReader.style.display = 'none';
+    if (mobileReader) mobileReader.style.display = 'block';
+  } else {
+    if (desktopReader) desktopReader.style.display = 'block';
+    if (mobileReader) mobileReader.style.display = 'none';
+  }
+</script>
