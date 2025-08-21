@@ -36,6 +36,10 @@ const configModules = import.meta.glob('/src/config/*.yaml', {
   eager: true 
 });
 
+// 动态地获取所有故事页面图片和音频
+const imagePageModules = import.meta.glob('/public/stories/*/[0-9][0-9].png', { eager: true, import: 'default' });
+const audioPageModules = import.meta.glob('/public/audios/*/[0-9][0-9].mp3', { eager: true, import: 'default' });
+
 // 获取所有故事
 export async function getAllStories(): Promise<Story[]> {
   const stories: Story[] = [];
@@ -56,36 +60,22 @@ export async function getAllStories(): Promise<Story[]> {
         }
         
         // 构建图片路径
+        const pageImagePaths = Object.keys(imagePageModules)
+          .filter(path => path.startsWith(`/public/stories/${storyId}/`))
+          .sort();
+
         const images: StoryImages = {
           cover: `/stories/${storyId}/cover.png`,
-          pages: [
-            `/stories/${storyId}/01.png`,
-            `/stories/${storyId}/02.png`,
-            `/stories/${storyId}/03.png`,
-            `/stories/${storyId}/04.png`,
-            `/stories/${storyId}/05.png`,
-            `/stories/${storyId}/06.png`,
-            `/stories/${storyId}/07.png`,
-            `/stories/${storyId}/08.png`,
-            `/stories/${storyId}/09.png`,
-            `/stories/${storyId}/10.png`
-          ]
+          pages: pageImagePaths.map(path => path.replace('/public', ''))
         };
 
-        // 构建音频路径（预留，暂时没有音频文件）
+        // 构建音频路径
+        const pageAudioPaths = Object.keys(audioPageModules)
+          .filter(path => path.startsWith(`/public/audios/${storyId}/`))
+          .sort();
+        
         const audios: StoryAudios = {
-          pages: [
-            `/audios/${storyId}/01.mp3`,
-            `/audios/${storyId}/02.mp3`,
-            `/audios/${storyId}/03.mp3`,
-            `/audios/${storyId}/04.mp3`,
-            `/audios/${storyId}/05.mp3`,
-            `/audios/${storyId}/06.mp3`,
-            `/audios/${storyId}/07.mp3`,
-            `/audios/${storyId}/08.mp3`,
-            `/audios/${storyId}/09.mp3`,
-            `/audios/${storyId}/10.mp3`
-          ]
+          pages: pageAudioPaths.map(path => path.replace('/public', ''))
         };
         
         // 创建故事对象
@@ -93,7 +83,7 @@ export async function getAllStories(): Promise<Story[]> {
           id: storyId, // 直接使用原始的故事ID
           config,
           images,
-          audios // 包含音频路径，但文件暂时不存在
+          audios // 包含音频路径
         });
         
       } catch (error) {
