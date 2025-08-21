@@ -1,0 +1,599 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getAllStories, getStoryById } from '../../lib/stories';
+
+export async function getStaticPaths() {
+  const stories = await getAllStories();
+  return stories.map(story => ({
+    params: { id: story.id }
+  }));
+}
+
+const { id } = Astro.params;
+const story = await getStoryById(id!);
+
+if (!story) {
+  return Astro.redirect('/404');
+}
+---
+
+<Layout title={story.config.title}>
+  <div class="story-reader">
+    <!-- 导航栏 -->
+    <nav class="story-nav">
+      <a href="/" class="back-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m12 19-7-7 7-7"/>
+          <path d="M19 12H5"/>
+        </svg>
+        返回首页
+      </a>
+      <h1 class="story-title">{story.config.title}</h1>
+      <div class="story-meta">
+        <span class="author">作者：{story.config.author}</span>
+        <span class="date">{story.config.createdDate}</span>
+      </div>
+    </nav>
+
+    <!-- 故事阅读器 -->
+    <div class="story-content" id="storyContent">
+      <div class="page-container">
+        <!-- 故事图片 -->
+        <div class="story-image-container">
+          <img 
+            id="storyImage" 
+            src={story.images.pages[0]} 
+            alt={`${story.config.title} - 第1页`}
+            loading="lazy"
+            class="story-image"
+          />
+        </div>
+
+        <!-- 故事文字和控制区域 -->
+        <div class="story-sidebar">
+          <!-- 页码显示 -->
+          <div class="page-info">
+            <span id="currentPage">1</span> / <span id="totalPages">{story.config.pages.length}</span>
+          </div>
+
+          <!-- 故事文字内容 -->
+          <div class="story-text-container">
+            <p id="storyText" class="story-text">
+              {story.config.pages[0]}
+            </p>
+          </div>
+
+          <!-- 语音控制区域（预留） -->
+          <div class="audio-controls" style="display: none;">
+            <button id="playPauseBtn" class="audio-btn">
+              <svg id="playIcon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="5,3 19,12 5,21"/>
+              </svg>
+              <svg id="pauseIcon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                <rect x="6" y="4" width="4" height="16"/>
+                <rect x="14" y="4" width="4" height="16"/>
+              </svg>
+            </button>
+            <div class="audio-progress">
+              <div class="progress-bar">
+                <div class="progress-fill"></div>
+              </div>
+            </div>
+            <div class="audio-options">
+              <select id="speedSelect" class="speed-select">
+                <option value="0.8">慢速</option>
+                <option value="1" selected>正常</option>
+                <option value="1.2">快速</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 导航按钮 -->
+          <div class="navigation-controls">
+            <button id="prevBtn" class="nav-btn" disabled>
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m15 18-6-6 6-6"/>
+              </svg>
+              上一页
+            </button>
+            <button id="nextBtn" class="nav-btn">
+              下一页
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m9 18 6-6-6-6"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- 全屏阅读按钮 -->
+          <div class="reading-options">
+            <button id="fullscreenBtn" class="option-btn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+              </svg>
+              全屏阅读
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 数据传递给JavaScript -->
+  <script define:vars={{ 
+    storyPages: story.config.pages,
+    storyImages: story.images.pages,
+    storyAudios: story.audios?.pages || [],
+    storyTitle: story.config.title
+  }}>
+    // 故事阅读器功能
+    class StoryReader {
+      constructor(pages, images, audios, title) {
+        this.pages = pages;
+        this.images = images;
+        this.audios = audios;
+        this.title = title;
+        this.currentPage = 0;
+        this.totalPages = pages.length;
+        this.isFullscreen = false;
+        this.hasAudio = audios && audios.length > 0;
+        
+        this.initElements();
+        this.bindEvents();
+        this.updatePage();
+        this.initAudioControls();
+      }
+
+      initElements() {
+        this.storyImage = document.getElementById('storyImage');
+        this.storyText = document.getElementById('storyText');
+        this.currentPageSpan = document.getElementById('currentPage');
+        this.totalPagesSpan = document.getElementById('totalPages');
+        this.prevBtn = document.getElementById('prevBtn');
+        this.nextBtn = document.getElementById('nextBtn');
+        this.fullscreenBtn = document.getElementById('fullscreenBtn');
+        this.storyContent = document.getElementById('storyContent');
+      }
+
+      bindEvents() {
+        // 导航按钮事件
+        this.prevBtn.addEventListener('click', () => this.previousPage());
+        this.nextBtn.addEventListener('click', () => this.nextPage());
+        
+        // 键盘导航
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'ArrowLeft') this.previousPage();
+          if (e.key === 'ArrowRight') this.nextPage();
+          if (e.key === 'Escape' && this.isFullscreen) this.exitFullscreen();
+        });
+
+        // 全屏功能
+        this.fullscreenBtn.addEventListener('click', () => this.toggleFullscreen());
+
+        // 触摸滑动支持（移动端）
+        let startX = 0;
+        let endX = 0;
+        
+        this.storyContent.addEventListener('touchstart', (e) => {
+          startX = e.touches[0].clientX;
+        }, { passive: true });
+        
+        this.storyContent.addEventListener('touchend', (e) => {
+          endX = e.changedTouches[0].clientX;
+          const diff = startX - endX;
+          
+          if (Math.abs(diff) > 50) { // 最小滑动距离
+            if (diff > 0) {
+              this.nextPage(); // 向左滑动，下一页
+            } else {
+              this.previousPage(); // 向右滑动，上一页
+            }
+          }
+        }, { passive: true });
+      }
+
+      updatePage() {
+        // 更新图片
+        this.storyImage.src = this.images[this.currentPage];
+        this.storyImage.alt = `${this.title} - 第${this.currentPage + 1}页`;
+        
+        // 图片加载错误处理
+        this.storyImage.onerror = () => {
+          console.warn(`图片加载失败: ${this.images[this.currentPage]}`);
+          // 可以设置默认图片或显示加载失败提示
+        };
+        
+        // 更新文字
+        this.storyText.textContent = this.pages[this.currentPage];
+        
+        // 更新页码
+        this.currentPageSpan.textContent = this.currentPage + 1;
+        
+        // 更新按钮状态
+        this.prevBtn.disabled = this.currentPage === 0;
+        this.nextBtn.disabled = this.currentPage === this.totalPages - 1;
+        
+        // 添加页面切换动画
+        this.storyImage.style.opacity = '0';
+        this.storyText.style.opacity = '0';
+        
+        setTimeout(() => {
+          this.storyImage.style.opacity = '1';
+          this.storyText.style.opacity = '1';
+        }, 150);
+      }
+
+      previousPage() {
+        if (this.currentPage > 0) {
+          this.currentPage--;
+          this.updatePage();
+        }
+      }
+
+      nextPage() {
+        if (this.currentPage < this.totalPages - 1) {
+          this.currentPage++;
+          this.updatePage();
+        }
+      }
+
+      toggleFullscreen() {
+        if (!this.isFullscreen) {
+          this.enterFullscreen();
+        } else {
+          this.exitFullscreen();
+        }
+      }
+
+      enterFullscreen() {
+        this.storyContent.classList.add('fullscreen');
+        this.isFullscreen = true;
+        this.fullscreenBtn.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>
+          </svg>
+          退出全屏
+        `;
+      }
+
+      exitFullscreen() {
+        this.storyContent.classList.remove('fullscreen');
+        this.isFullscreen = false;
+        this.fullscreenBtn.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+          </svg>
+          全屏阅读
+        `;
+      }
+
+      initAudioControls() {
+        const audioControls = document.querySelector('.audio-controls');
+        if (this.hasAudio && audioControls) {
+          audioControls.style.display = 'block';
+          // TODO: 当音频文件可用时，在这里初始化音频播放功能
+          console.log('音频功能预留：', this.audios);
+        }
+      }
+    }
+
+    // 初始化故事阅读器
+    document.addEventListener('DOMContentLoaded', () => {
+      new StoryReader(storyPages, storyImages, storyAudios, storyTitle);
+    });
+  </script>
+
+  <style>
+    .story-reader {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #ffeef3 0%, #f0f8ff 100%);
+    }
+
+    .story-nav {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      padding: 1rem 2rem;
+      border-bottom: 1px solid #e5e7eb;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #6b7280;
+      text-decoration: none;
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+      transition: color 0.2s;
+    }
+
+    .back-btn:hover {
+      color: #ff69b4;
+    }
+
+    .story-title {
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: #333;
+      margin: 0.5rem 0;
+    }
+
+    .story-meta {
+      display: flex;
+      gap: 1rem;
+      font-size: 0.9rem;
+      color: #6b7280;
+    }
+
+    .story-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .page-container {
+      display: grid;
+      grid-template-columns: 1fr 400px;
+      gap: 2rem;
+      align-items: start;
+    }
+
+    .story-image-container {
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      position: sticky;
+      top: 120px;
+    }
+
+    .story-image {
+      width: 100%;
+      height: auto;
+      display: block;
+      transition: opacity 0.3s ease;
+    }
+
+    .story-sidebar {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      position: sticky;
+      top: 120px;
+      max-height: calc(100vh - 140px);
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .page-info {
+      text-align: center;
+      font-size: 1.1rem;
+      color: #6b7280;
+      font-weight: 500;
+    }
+
+    .story-text-container {
+      flex: 1;
+      min-height: 200px;
+    }
+
+    .story-text {
+      font-size: 1.1rem;
+      line-height: 1.8;
+      color: #333;
+      margin: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .audio-controls {
+      padding: 1rem;
+      background: #f8fafc;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .audio-btn {
+      background: #ff69b4;
+      border: none;
+      border-radius: 50%;
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 1rem;
+    }
+
+    .audio-btn:hover {
+      background: #ff1493;
+      transform: scale(1.05);
+    }
+
+    .audio-progress {
+      margin: 1rem 0;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 4px;
+      background: #e5e7eb;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: #ff69b4;
+      width: 0%;
+      transition: width 0.1s;
+    }
+
+    .speed-select {
+      padding: 0.5rem;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      background: white;
+      font-size: 0.9rem;
+    }
+
+    .navigation-controls {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .nav-btn {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      border: 2px solid #ff69b4;
+      background: white;
+      color: #ff69b4;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      font-weight: 500;
+    }
+
+    .nav-btn:hover:not(:disabled) {
+      background: #ff69b4;
+      color: white;
+      transform: translateY(-2px);
+    }
+
+    .nav-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .option-btn {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #e5e7eb;
+      background: #f8fafc;
+      color: #6b7280;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .option-btn:hover {
+      background: #e5e7eb;
+      color: #374151;
+    }
+
+    /* 全屏模式 */
+    .story-content.fullscreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #000;
+      z-index: 9999;
+      padding: 2rem;
+      overflow: auto;
+    }
+
+    .story-content.fullscreen .page-container {
+      max-width: none;
+      height: 100%;
+      grid-template-columns: 1fr 350px;
+    }
+
+    .story-content.fullscreen .story-image-container {
+      position: static;
+    }
+
+    .story-content.fullscreen .story-sidebar {
+      position: static;
+      max-height: none;
+      height: fit-content;
+    }
+
+    /* 响应式布局 */
+    @media (max-width: 1024px) {
+      .page-container {
+        grid-template-columns: 1fr 350px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .story-content {
+        padding: 1rem;
+      }
+
+      .page-container {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+      }
+
+      .story-image-container,
+      .story-sidebar {
+        position: static;
+      }
+
+      .story-sidebar {
+        max-height: none;
+      }
+
+      .story-nav {
+        padding: 1rem;
+      }
+
+      .story-title {
+        font-size: 1.5rem;
+      }
+
+      .story-meta {
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+
+      .navigation-controls {
+        flex-direction: column;
+      }
+
+      .nav-btn {
+        justify-content: center;
+      }
+
+      /* 移动端全屏模式调整 */
+      .story-content.fullscreen {
+        padding: 1rem;
+      }
+
+      .story-content.fullscreen .page-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .story-content {
+        padding: 0.5rem;
+      }
+
+      .story-sidebar {
+        padding: 1.5rem;
+      }
+
+      .story-text {
+        font-size: 1rem;
+      }
+    }
+  </style>
+</Layout>

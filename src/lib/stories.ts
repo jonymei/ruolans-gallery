@@ -16,11 +16,17 @@ export interface StoryImages {
   pages: string[];
 }
 
+// 故事音频接口（预留）
+export interface StoryAudios {
+  pages: string[];
+}
+
 // 完整故事接口
 export interface Story {
   id: string;
   config: StoryConfig;
   images: StoryImages;
+  audios?: StoryAudios; // 可选，暂时没有音频文件
 }
 
 // 使用 import.meta.glob 获取所有 YAML 配置文件
@@ -65,13 +71,30 @@ export async function getAllStories(): Promise<Story[]> {
             `/stories/${storyId}/10.png`
           ]
         };
+
+        // 构建音频路径（预留，暂时没有音频文件）
+        const audios: StoryAudios = {
+          pages: [
+            `/audios/${storyId}/01.mp3`,
+            `/audios/${storyId}/02.mp3`,
+            `/audios/${storyId}/03.mp3`,
+            `/audios/${storyId}/04.mp3`,
+            `/audios/${storyId}/05.mp3`,
+            `/audios/${storyId}/06.mp3`,
+            `/audios/${storyId}/07.mp3`,
+            `/audios/${storyId}/08.mp3`,
+            `/audios/${storyId}/09.mp3`,
+            `/audios/${storyId}/10.mp3`
+          ]
+        };
         
         // 简单粗暴复制10份相同的故事
         for (let i = 1; i <= 10; i++) {
           stories.push({
             id: `${storyId}_${i}`,
             config,
-            images
+            images,
+            audios // 包含音频路径，但文件暂时不存在
           });
         }
         
