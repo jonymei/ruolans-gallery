@@ -59,6 +59,24 @@ const { story } = Astro.props;
   </main>
 </div>
 
+<script>
+  // 管理音频播放，确保同一时间只有一个音频在播放
+  document.addEventListener('DOMContentLoaded', function() {
+    const audioPlayers = document.querySelectorAll('.audio-player') as NodeListOf<HTMLAudioElement>;
+    
+    audioPlayers.forEach(audio => {
+      audio.addEventListener('play', function() {
+        // 暂停其他所有正在播放的音频
+        audioPlayers.forEach(otherAudio => {
+          if (otherAudio !== audio && !otherAudio.paused) {
+            otherAudio.pause();
+          }
+        });
+      });
+    });
+  });
+</script>
+
 <style>
   .mobile-story-reader {
     background-color: #fdf2f8;

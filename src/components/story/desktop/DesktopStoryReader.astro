@@ -262,6 +262,13 @@ const { story } = Astro.props;
     playAudio() {
       if (!this.currentAudio || !this.currentAudio.src) return;
 
+      // 暂停其他所有正在播放的音频（全局管理）
+      document.querySelectorAll('audio').forEach(audio => {
+        if (audio !== this.currentAudio && !audio.paused) {
+          audio.pause();
+        }
+      });
+
       this.currentAudio.play().then(() => {
         this.isPlaying = true;
         this.updatePlayPauseButton();
