@@ -70,9 +70,9 @@ if (!story) {
               
               <!-- 页面底部控制区域 -->
               <div class="page-controls">
-                <!-- 语音控制区域（预留） -->
-                <div class="audio-controls" style="display: none;">
-                  <button id="playPauseBtn" class="audio-btn">
+                <!-- 音频控制区域 -->
+                <div class="audio-controls" id="audioControls">
+                  <button id="playPauseBtn" class="audio-btn" title="播放/暂停">
                     <svg id="playIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <polygon points="5,3 19,12 5,21"/>
                     </svg>
@@ -82,10 +82,14 @@ if (!story) {
                     </svg>
                   </button>
                   <div class="audio-progress">
-                    <div class="progress-bar">
-                      <div class="progress-fill"></div>
+                    <div class="progress-bar" id="progressBar">
+                      <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="audio-time">
+                      <span id="currentTime">0:00</span> / <span id="totalTime">0:00</span>
                     </div>
                   </div>
+                  <audio id="audioPlayer" preload="metadata"></audio>
                 </div>
                 
                 <!-- 页码指示器 -->
@@ -143,6 +147,11 @@ if (!story) {
         this.isFullscreen = false;
         this.hasAudio = audios && audios.length > 0;
         
+        // 音频相关状态
+        this.isPlaying = false;
+        this.shouldAutoPlay = false; // 用户是否开启了自动播放
+        this.currentAudio = null;
+        
         this.initElements();
         this.bindEvents();
         this.updatePage();
@@ -159,6 +168,17 @@ if (!story) {
         this.bookContainer = document.getElementById('bookContainer');
         this.leftPage = document.querySelector('.left-page');
         this.rightPage = document.querySelector('.right-page');
+        
+        // 音频相关元素
+        this.audioPlayer = document.getElementById('audioPlayer');
+        this.audioControls = document.getElementById('audioControls');
+        this.playPauseBtn = document.getElementById('playPauseBtn');
+        this.playIcon = document.getElementById('playIcon');
+        this.pauseIcon = document.getElementById('pauseIcon');
+        this.progressBar = document.getElementById('progressBar');
+        this.progressFill = document.getElementById('progressFill');
+        this.currentTimeSpan = document.getElementById('currentTime');
+        this.totalTimeSpan = document.getElementById('totalTime');
       }
 
       bindEvents() {
@@ -236,6 +256,9 @@ if (!story) {
           this.prevBtn.disabled = this.currentPage === 0;
           this.nextBtn.disabled = this.currentPage === this.totalPages - 1;
           
+          // 更新音频
+          this.updateAudio();
+          
           this.removePageTurnAnimation();
         }, 200);
       }
@@ -301,12 +324,162 @@ if (!story) {
       }
 
       initAudioControls() {
-        const audioControls = document.querySelector('.audio-controls');
-        if (this.hasAudio && audioControls) {
-          audioControls.style.display = 'flex';
-          // TODO: 当音频文件可用时，在这里初始化音频播放功能
-          console.log('音频功能预留：', this.audios);
+        if (!this.hasAudio) {
+          this.audioControls.style.display = 'none';
+          return;
         }
+
+        this.audioControls.style.display = 'flex';
+
+        // 播放/暂停按钮事件
+        this.playPauseBtn.addEventListener('click', () => {
+          this.togglePlayPause();
+        });
+
+        // 进度条点击事件
+        this.progressBar.addEventListener('click', (e) => {
+          if (this.currentAudio) {
+            const rect = this.progressBar.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const progressPercent = clickX / rect.width;
+            const newTime = progressPercent * this.currentAudio.duration;
+            this.currentAudio.currentTime = newTime;
+          }
+        });
+
+        // 音频事件监听
+        if (this.audioPlayer) {
+          this.audioPlayer.addEventListener('loadedmetadata', () => {
+            this.updateTotalTime();
+          });
+
+          this.audioPlayer.addEventListener('timeupdate', () => {
+            this.updateProgress();
+          });
+
+          this.audioPlayer.addEventListener('ended', () => {
+            this.onAudioEnded();
+          });
+
+          this.audioPlayer.addEventListener('error', (e) => {
+            console.warn('音频加载失败:', e);
+            this.resetAudioUI();
+          });
+        }
+
+        // 初始化第一个音频
+        this.loadAudio(this.currentPage);
+      }
+
+      loadAudio(pageIndex) {
+        if (!this.hasAudio || !this.audios[pageIndex]) {
+          return;
+        }
+
+        const audioUrl = this.audios[pageIndex];
+        this.audioPlayer.src = audioUrl;
+        this.currentAudio = this.audioPlayer;
+
+        // 如果用户之前开启了自动播放，则在音频加载完成后播放
+        if (this.shouldAutoPlay) {
+          this.audioPlayer.addEventListener('canplaythrough', () => {
+            this.playAudio();
+          }, { once: true });
+        }
+      }
+
+      updateAudio() {
+        if (!this.hasAudio) return;
+
+        // 停止当前音频
+        if (this.currentAudio) {
+          this.currentAudio.pause();
+          this.currentAudio.currentTime = 0;
+        }
+
+        // 加载新页面的音频
+        this.loadAudio(this.currentPage);
+        this.resetAudioUI();
+      }
+
+      togglePlayPause() {
+        if (!this.currentAudio) return;
+
+        if (this.isPlaying) {
+          this.pauseAudio();
+        } else {
+          this.playAudio();
+        }
+      }
+
+      playAudio() {
+        if (!this.currentAudio) return;
+
+        this.currentAudio.play().then(() => {
+          this.isPlaying = true;
+          this.shouldAutoPlay = true; // 记住用户的播放偏好
+          this.updatePlayPauseButton();
+        }).catch(error => {
+          console.warn('音频播放失败:', error);
+        });
+      }
+
+      pauseAudio() {
+        if (!this.currentAudio) return;
+
+        this.currentAudio.pause();
+        this.isPlaying = false;
+        this.shouldAutoPlay = false; // 用户手动暂停，停止自动播放
+        this.updatePlayPauseButton();
+      }
+
+      updatePlayPauseButton() {
+        if (this.isPlaying) {
+          this.playIcon.style.display = 'none';
+          this.pauseIcon.style.display = 'block';
+          this.playPauseBtn.title = '暂停';
+        } else {
+          this.playIcon.style.display = 'block';
+          this.pauseIcon.style.display = 'none';
+          this.playPauseBtn.title = '播放';
+        }
+      }
+
+      updateProgress() {
+        if (!this.currentAudio) return;
+
+        const progress = (this.currentAudio.currentTime / this.currentAudio.duration) * 100;
+        this.progressFill.style.width = `${progress}%`;
+        
+        this.currentTimeSpan.textContent = this.formatTime(this.currentAudio.currentTime);
+      }
+
+      updateTotalTime() {
+        if (!this.currentAudio) return;
+        
+        this.totalTimeSpan.textContent = this.formatTime(this.currentAudio.duration);
+      }
+
+      formatTime(seconds) {
+        if (isNaN(seconds)) return '0:00';
+        
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+      }
+
+      resetAudioUI() {
+        this.isPlaying = false;
+        this.updatePlayPauseButton();
+        this.progressFill.style.width = '0%';
+        this.currentTimeSpan.textContent = '0:00';
+        this.totalTimeSpan.textContent = '0:00';
+      }
+
+      onAudioEnded() {
+        this.isPlaying = false;
+        this.updatePlayPauseButton();
+        // 音频结束后不自动播放下一页，保持用户的控制权
       }
     }
 
@@ -641,6 +814,9 @@ if (!story) {
 
     .audio-progress {
       flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
     }
 
     .progress-bar {
@@ -649,6 +825,11 @@ if (!story) {
       background: rgba(168, 85, 247, 0.15);
       border-radius: 3px;
       overflow: hidden;
+      cursor: pointer;
+    }
+
+    .progress-bar:hover {
+      height: 8px;
     }
 
     .progress-fill {
@@ -656,6 +837,13 @@ if (!story) {
       background: linear-gradient(90deg, #a855f7, #ec4899);
       width: 0%;
       transition: width 0.1s;
+    }
+
+    .audio-time {
+      font-size: 0.8rem;
+      color: #6b7280;
+      text-align: center;
+      font-weight: 500;
     }
 
     .page-indicator {
