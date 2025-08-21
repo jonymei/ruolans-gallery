@@ -1,0 +1,167 @@
+---
+import type { Story } from "../../../lib/stories";
+
+export interface Props {
+  story: Story;
+}
+
+const { story } = Astro.props;
+---
+
+<div class="mobile-story-reader">
+  <!-- 粘性头部 -->
+  <header class="mobile-header">
+    <a href="/" class="back-btn">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m12 19-7-7 7-7"/>
+        <path d="M19 12H5"/>
+      </svg>
+      返回
+    </a>
+    <div class="header-title-container">
+      <h1 class="story-title" title={story.config.title}>{story.config.title}</h1>
+    </div>
+  </header>
+
+  <!-- 故事内容 -->
+  <main class="story-content">
+    {story.config.pages.map((text, index) => (
+      <section class="story-page-section" id={`page-${index + 1}`}>
+        <div class="page-container">
+          <!-- 音频播放器 -->
+          {story.audios && story.audios.pages[index] && (
+            <div class="audio-player-wrapper">
+              <audio controls src={story.audios.pages[index]} preload="metadata" class="audio-player"></audio>
+            </div>
+          )}
+          
+          <!-- 文本内容 -->
+          <div class="text-wrapper">
+            <p class="story-text">{text}</p>
+          </div>
+
+          <!-- 图片内容 -->
+          <div class="image-wrapper">
+            <img 
+              src={story.images.pages[index]} 
+              alt={`插图 ${index + 1}`} 
+              loading="lazy" 
+              class="story-image"
+            />
+          </div>
+        </div>
+        <div class="page-number">
+          - {index + 1} -
+        </div>
+      </section>
+    ))}
+  </main>
+</div>
+
+<style>
+  .mobile-story-reader {
+    background-color: #fdf2f8;
+    color: #374151;
+    overflow-x: hidden;
+    width: 100%;
+  }
+
+  /* 头部 */
+  .mobile-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(236, 72, 153, 0.2);
+    gap: 0.75rem;
+  }
+
+  .back-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: #a855f7;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+
+  .header-title-container {
+    flex-grow: 1;
+    overflow: hidden;
+    text-align: center;
+  }
+
+  .story-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0;
+  }
+
+  /* 内容区域 */
+  .story-content {
+    padding: 1rem 0;
+  }
+
+  .story-page-section {
+    margin-bottom: 2rem;
+  }
+
+  .page-container {
+    background-color: #fff;
+    margin: 0 1rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+  }
+
+  /* 音频播放器 */
+  .audio-player-wrapper {
+    padding: 1rem 1rem 0.5rem;
+  }
+
+  .audio-player {
+    width: 100%;
+    height: 40px;
+  }
+  
+  /* 文本 */
+  .text-wrapper {
+    padding: 0.5rem 1.5rem 1rem;
+  }
+
+  .story-text {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    text-align: justify;
+    text-indent: 2em;
+  }
+
+  /* 图片 */
+  .image-wrapper {
+    width: 100%;
+    line-height: 0; /* 移除图片下方的空隙 */
+  }
+
+  .story-image {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+  }
+
+  /* 页码 */
+  .page-number {
+    text-align: center;
+    margin-top: 1.5rem;
+    color: #9ca3af;
+    font-size: 0.9rem;
+  }
+</style>

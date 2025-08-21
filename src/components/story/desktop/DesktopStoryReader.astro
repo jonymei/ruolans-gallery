@@ -1,0 +1,612 @@
+---
+import type { Story } from "../../../lib/stories";
+
+export interface Props {
+  story: Story;
+}
+
+const { story } = Astro.props;
+---
+
+<div class="desktop-story-reader">
+  <!-- 导航栏 -->
+  <nav class="story-nav">
+    <a href="/" class="back-btn">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m12 19-7-7 7-7"/>
+        <path d="M19 12H5"/>
+      </svg>
+      返回书架
+    </a>
+    <div class="book-info">
+      <h1 class="story-title">{story.config.title}</h1>
+      <div class="story-meta">
+        <span class="author">作者：{story.config.author}</span>
+        <span class="date">{story.config.createdDate}</span>
+      </div>
+    </div>
+    <div class="page-indicator-container">
+      <div class="page-indicator">
+        第 <span id="currentPageNum">1</span> / {story.config.pages.length} 页
+      </div>
+    </div>
+  </nav>
+
+  <!-- 书本阅读器 -->
+  <div class="book-container" id="bookContainer">
+    <div class="book-wrapper">
+      <!-- 左页（图片页） -->
+      <div class="book-page left-page">
+        <div class="page-content">
+          <div class="image-frame">
+            <img 
+              id="storyImage" 
+              src={story.images.pages[0]} 
+              alt={`${story.config.title} - 第1页`}
+              loading="lazy"
+              class="story-image"
+              width="896"
+              height="1200"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- 右页（文字页） -->
+      <div class="book-page right-page">
+        <div class="page-content">
+          <div class="text-content">
+            <p id="storyText" class="story-text">
+              {story.config.pages[0]}
+            </p>
+          </div>
+          
+          <!-- 页面底部控制区域 -->
+          <div class="page-controls">
+            <!-- 音频控制区域 -->
+            <div class="audio-controls" id="audioControls">
+              <button id="playPauseBtn" class="audio-btn" title="播放/暂停">
+                <svg id="playIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="5,3 19,12 5,21"/>
+                </svg>
+                <svg id="pauseIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                  <rect x="6" y="4" width="4" height="16"/>
+                  <rect x="14" y="4" width="4" height="16"/>
+                </svg>
+              </button>
+              <div class="audio-progress">
+                <div class="progress-bar" id="progressBar">
+                  <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="audio-time">
+                  <span id="currentTime">0:00</span> / <span id="totalTime">0:00</span>
+                </div>
+              </div>
+              <audio id="audioPlayer" preload="metadata"></audio>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 翻页控制按钮 -->
+    <button id="prevBtn" class="page-turn-btn prev-btn" disabled>
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m15 18-6-6 6-6"/>
+      </svg>
+    </button>
+    <button id="nextBtn" class="page-turn-btn next-btn">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m9 18 6-6-6-6"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<!-- 数据传递给JavaScript -->
+<script define:vars={{ 
+  storyPages: story.config.pages,
+  storyImages: story.images.pages,
+  storyAudios: story.audios?.pages || [],
+  storyTitle: story.config.title
+}}>
+  class BookReader {
+    constructor(pages, images, audios, title) {
+      this.pages = pages;
+      this.images = images;
+      this.audios = audios;
+      this.title = title;
+      this.currentPage = 0;
+      this.totalPages = pages.length;
+      this.hasAudio = audios && audios.length > 0;
+      
+      this.isPlaying = false;
+      this.currentAudio = null;
+      
+      this.initElements();
+      this.bindEvents();
+      this.updatePage();
+      this.initAudioControls();
+    }
+
+    initElements() {
+      this.storyImage = document.getElementById('storyImage');
+      this.storyText = document.getElementById('storyText');
+      this.currentPageNumSpan = document.getElementById('currentPageNum');
+      this.prevBtn = document.getElementById('prevBtn');
+      this.nextBtn = document.getElementById('nextBtn');
+      this.bookContainer = document.getElementById('bookContainer');
+      
+      this.audioPlayer = document.getElementById('audioPlayer');
+      this.audioControls = document.getElementById('audioControls');
+      this.playPauseBtn = document.getElementById('playPauseBtn');
+      this.playIcon = document.getElementById('playIcon');
+      this.pauseIcon = document.getElementById('pauseIcon');
+      this.progressBar = document.getElementById('progressBar');
+      this.progressFill = document.getElementById('progressFill');
+      this.currentTimeSpan = document.getElementById('currentTime');
+      this.totalTimeSpan = document.getElementById('totalTime');
+    }
+
+    bindEvents() {
+      this.prevBtn.addEventListener('click', () => this.previousPage());
+      this.nextBtn.addEventListener('click', () => this.nextPage());
+      
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowLeft') this.previousPage();
+        if (e.key === 'ArrowRight') this.nextPage();
+        if (e.key === ' ') {
+          e.preventDefault();
+          this.togglePlayPause();
+        }
+      });
+    }
+
+    updatePage() {
+      // 更新图片
+      this.storyImage.src = this.images[this.currentPage];
+      this.storyImage.alt = `${this.title} - 第${this.currentPage + 1}页`;
+      
+      this.storyImage.onerror = () => {
+        console.warn(`图片加载失败: ${this.images[this.currentPage]}`);
+      };
+      
+      // 更新文字
+      this.storyText.textContent = this.pages[this.currentPage];
+      
+      // 更新页码
+      this.currentPageNumSpan.textContent = this.currentPage + 1;
+      
+      // 更新按钮状态
+      this.prevBtn.disabled = this.currentPage === 0;
+      this.nextBtn.disabled = this.currentPage === this.totalPages - 1;
+      
+      // 更新音频
+      this.updateAudio();
+    }
+
+    previousPage() {
+      if (this.currentPage > 0) {
+        this.currentPage--;
+        this.updatePage();
+      }
+    }
+
+    nextPage() {
+      if (this.currentPage < this.totalPages - 1) {
+        this.currentPage++;
+        this.updatePage();
+      }
+    }
+
+    initAudioControls() {
+      if (!this.hasAudio) {
+        this.audioControls.style.display = 'none';
+        return;
+      }
+
+      this.playPauseBtn.addEventListener('click', () => this.togglePlayPause());
+
+      this.progressBar.addEventListener('click', (e) => {
+        if (this.currentAudio && this.currentAudio.duration) {
+          const rect = this.progressBar.getBoundingClientRect();
+          const clickX = e.clientX - rect.left;
+          const progressPercent = clickX / rect.width;
+          this.currentAudio.currentTime = progressPercent * this.currentAudio.duration;
+        }
+      });
+
+      if (this.audioPlayer) {
+        this.audioPlayer.addEventListener('loadedmetadata', () => this.updateTotalTime());
+        this.audioPlayer.addEventListener('timeupdate', () => this.updateProgress());
+        this.audioPlayer.addEventListener('ended', () => this.onAudioEnded());
+        this.audioPlayer.addEventListener('error', (e) => {
+          console.warn('音频加载失败:', e);
+          this.resetAudioUI();
+        });
+      }
+
+      this.loadAudio(this.currentPage);
+    }
+
+    loadAudio(pageIndex) {
+      if (!this.hasAudio || !this.audios[pageIndex]) {
+        this.currentAudio = null;
+        this.audioControls.style.display = 'none';
+        return;
+      }
+      
+      this.audioControls.style.display = 'flex';
+      const audioUrl = this.audios[pageIndex];
+      this.audioPlayer.src = audioUrl;
+      this.currentAudio = this.audioPlayer;
+    }
+
+    updateAudio() {
+      if (!this.hasAudio) return;
+
+      if (this.currentAudio) {
+        this.currentAudio.pause();
+        this.currentAudio.currentTime = 0;
+      }
+
+      this.loadAudio(this.currentPage);
+      this.resetAudioUI();
+    }
+
+    togglePlayPause() {
+      if (!this.currentAudio) return;
+
+      if (this.isPlaying) {
+        this.pauseAudio();
+      } else {
+        this.playAudio();
+      }
+    }
+
+    playAudio() {
+      if (!this.currentAudio || !this.currentAudio.src) return;
+
+      this.currentAudio.play().then(() => {
+        this.isPlaying = true;
+        this.updatePlayPauseButton();
+      }).catch(error => {
+        console.warn('音频播放失败:', error);
+        this.isPlaying = false;
+        this.updatePlayPauseButton();
+      });
+    }
+
+    pauseAudio() {
+      if (!this.currentAudio) return;
+      this.currentAudio.pause();
+      this.isPlaying = false;
+      this.updatePlayPauseButton();
+    }
+
+    updatePlayPauseButton() {
+      if (this.isPlaying) {
+        this.playIcon.style.display = 'none';
+        this.pauseIcon.style.display = 'block';
+        this.playPauseBtn.title = '暂停';
+      } else {
+        this.playIcon.style.display = 'block';
+        this.pauseIcon.style.display = 'none';
+        this.playPauseBtn.title = '播放';
+      }
+    }
+
+    updateProgress() {
+      if (!this.currentAudio || !this.currentAudio.duration) return;
+      const progress = (this.currentAudio.currentTime / this.currentAudio.duration) * 100;
+      this.progressFill.style.width = `${progress}%`;
+      this.currentTimeSpan.textContent = this.formatTime(this.currentAudio.currentTime);
+    }
+
+    updateTotalTime() {
+      if (!this.currentAudio || !this.currentAudio.duration) return;
+      this.totalTimeSpan.textContent = this.formatTime(this.currentAudio.duration);
+    }
+
+    formatTime(seconds) {
+      if (isNaN(seconds)) return '0:00';
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    resetAudioUI() {
+      this.isPlaying = false;
+      this.updatePlayPauseButton();
+      this.progressFill.style.width = '0%';
+      this.currentTimeSpan.textContent = '0:00';
+      if (this.currentAudio && this.currentAudio.duration) {
+        this.totalTimeSpan.textContent = this.formatTime(this.currentAudio.duration);
+      } else {
+        this.totalTimeSpan.textContent = '0:00';
+      }
+    }
+
+    onAudioEnded() {
+      this.isPlaying = false;
+      this.updatePlayPauseButton();
+      this.progressFill.style.width = '100%';
+    }
+  }
+
+  // 初始化书本阅读器
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      new BookReader(storyPages, storyImages, storyAudios, storyTitle);
+    });
+  } else {
+    new BookReader(storyPages, storyImages, storyAudios, storyTitle);
+  }
+</script>
+
+<style>
+  .desktop-story-reader {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #fdf2f8 0%, #f0f4ff 100%);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* 导航栏样式 */
+  .story-nav {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    padding: 1rem 2rem;
+    border-bottom: 1px solid rgba(236, 72, 153, 0.2);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #a855f7;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+  }
+
+  .back-btn:hover {
+    color: #ec4899;
+    background: rgba(236, 72, 153, 0.1);
+    border-color: rgba(236, 72, 153, 0.2);
+    transform: translateY(-2px);
+  }
+
+  .book-info {
+    text-align: center;
+    color: #4b5563;
+    flex-grow: 1;
+  }
+
+  .story-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0 0 0.25rem 0;
+  }
+
+  .story-meta {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    font-size: 0.85rem;
+    color: #6b7280;
+  }
+
+  .page-indicator-container {
+    width: 150px; /* 确保布局稳定 */
+    text-align: right;
+  }
+
+  .page-indicator {
+    font-size: 0.9rem;
+    color: #4b5563;
+    font-weight: 500;
+    background-color: rgba(168, 85, 247, 0.1);
+    padding: 6px 12px;
+    border-radius: 15px;
+  }
+
+  /* 书本容器 */
+  .book-container {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+    position: relative;
+  }
+
+  .book-wrapper {
+    display: flex;
+    width: calc(896px * 2 + 40px); /* 2 pages + gap */
+    height: 1200px;
+    max-width: 90vw;
+    max-height: calc(100vh - 120px);
+    aspect-ratio: calc(896 * 2 / 1200);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    border-radius: 8px;
+  }
+
+  /* 书页样式 */
+  .book-page {
+    background: #fff;
+    padding: 20px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .left-page {
+    width: 50%;
+    border-right: 1px solid #e5e7eb;
+    border-radius: 8px 0 0 8px;
+  }
+
+  .right-page {
+    width: 50%;
+    border-radius: 0 8px 8px 0;
+  }
+
+  .page-content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .image-frame {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    background-color: #f9fafb;
+  }
+
+  .story-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .right-page .page-content {
+    padding: 40px;
+  }
+
+  .text-content {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .story-text {
+    font-size: 1.2rem;
+    line-height: 2;
+    color: #374151;
+    text-align: justify;
+    text-indent: 2em;
+    max-width: 100%;
+  }
+
+  .page-controls {
+    width: 100%;
+    margin-top: auto;
+    padding-top: 20px;
+  }
+
+  .audio-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background-color: #f9fafb;
+    border-radius: 8px;
+    border: 1px solid #f3f4f6;
+  }
+
+  .audio-btn {
+    background: linear-gradient(135deg, #a855f7, #ec4899);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  .audio-btn:hover {
+    transform: scale(1.1);
+  }
+
+  .audio-progress {
+    flex-grow: 1;
+  }
+
+  .progress-bar {
+    width: 100%;
+    height: 4px;
+    background-color: #e5e7eb;
+    border-radius: 2px;
+    cursor: pointer;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #a855f7, #ec4899);
+    width: 0%;
+    border-radius: 2px;
+  }
+
+  .audio-time {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 4px;
+    text-align: right;
+  }
+
+  /* 翻页按钮 */
+  .page-turn-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid #e5e7eb;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+
+  .page-turn-btn:hover:not(:disabled) {
+    background-color: #fff;
+    transform: translateY(-50%) scale(1.1);
+    color: #a855f7;
+  }
+
+  .page-turn-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .prev-btn {
+    left: 1rem;
+  }
+
+  .next-btn {
+    right: 1rem;
+  }
+</style>
