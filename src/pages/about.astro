@@ -1,0 +1,91 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navigation from '../components/Navigation.astro';
+---
+
+<Layout 
+  title="关于若兰 | 若兰的AI故事书集锦" 
+  description="了解若兰，一位充满好奇心和创造力的20后小创作者。"
+>
+  <Navigation />
+  
+  <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <div class="text-center mb-12">
+      <h1 class="text-4xl font-bold text-gray-800 mb-4 animate-fade-in-down">关于若兰</h1>
+      <p class="text-lg text-gray-600 animate-fade-in-up">一位充满好奇心和创造力的20后小创作者</p>
+    </div>
+    
+    <div class="bg-white/60 backdrop-blur-sm rounded-lg shadow-lg p-8 md:p-12 border border-pink-100 animate-fade-in">
+      <div class="prose prose-lg max-w-none text-gray-700">
+        <p>若兰是一名20后女孩，对一切新鲜事物都充满了好奇。</p>
+        <p>现在最喜欢的事是和豆包聊天，以及构思故事并用 Gemini 制作成 Story Book。</p>
+        <p>这个网站记录了她近期的作品。</p>
+        <p>希望你喜欢她的故事！</p>
+      </div>
+    </div>
+  </main>
+  
+  <footer class="bg-white/40 backdrop-blur-sm border-t border-pink-100 py-8 mt-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center">
+        <p class="text-gray-500 text-sm">
+          ❤️ 由若兰创作，充满爱与想象力的故事世界 ❤️
+        </p>
+        <p class="text-gray-400 text-xs mt-2">
+          © 2025 若兰的AI故事书集锦. 保留所有权利.
+        </p>
+      </div>
+    </div>
+  </footer>
+</Layout>
+
+<style>
+  .prose p {
+    margin-bottom: 1.25em;
+  }
+
+  @keyframes fade-in-down {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fade-in-up {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .animate-fade-in-down {
+    animation: fade-in-down 0.8s ease-out forwards;
+  }
+
+  .animate-fade-in-up {
+    animation: fade-in-up 0.8s ease-out 0.4s forwards;
+    opacity: 0;
+  }
+
+  .animate-fade-in {
+    animation: fade-in 1s ease-out 0.8s forwards;
+    opacity: 0;
+  }
+</style>
