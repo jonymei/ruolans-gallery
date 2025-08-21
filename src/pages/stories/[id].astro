@@ -26,93 +26,99 @@ if (!story) {
           <path d="m12 19-7-7 7-7"/>
           <path d="M19 12H5"/>
         </svg>
-        返回首页
+        返回书架
       </a>
-      <h1 class="story-title">{story.config.title}</h1>
-      <div class="story-meta">
-        <span class="author">作者：{story.config.author}</span>
-        <span class="date">{story.config.createdDate}</span>
+      <div class="book-info">
+        <h1 class="story-title">{story.config.title}</h1>
+        <div class="story-meta">
+          <span class="author">作者：{story.config.author}</span>
+          <span class="date">{story.config.createdDate}</span>
+        </div>
       </div>
     </nav>
 
-    <!-- 故事阅读器 -->
-    <div class="story-content" id="storyContent">
-      <div class="page-container">
-        <!-- 故事图片 -->
-        <div class="story-image-container">
-          <img 
-            id="storyImage" 
-            src={story.images.pages[0]} 
-            alt={`${story.config.title} - 第1页`}
-            loading="lazy"
-            class="story-image"
-          />
-        </div>
-
-        <!-- 故事文字和控制区域 -->
-        <div class="story-sidebar">
-          <!-- 页码显示 -->
-          <div class="page-info">
-            <span id="currentPage">1</span> / <span id="totalPages">{story.config.pages.length}</span>
-          </div>
-
-          <!-- 故事文字内容 -->
-          <div class="story-text-container">
-            <p id="storyText" class="story-text">
-              {story.config.pages[0]}
-            </p>
-          </div>
-
-          <!-- 语音控制区域（预留） -->
-          <div class="audio-controls" style="display: none;">
-            <button id="playPauseBtn" class="audio-btn">
-              <svg id="playIcon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polygon points="5,3 19,12 5,21"/>
-              </svg>
-              <svg id="pauseIcon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
-                <rect x="6" y="4" width="4" height="16"/>
-                <rect x="14" y="4" width="4" height="16"/>
-              </svg>
-            </button>
-            <div class="audio-progress">
-              <div class="progress-bar">
-                <div class="progress-fill"></div>
+    <!-- 书本阅读器 -->
+    <div class="book-container" id="bookContainer">
+      <div class="book-wrapper">
+        <!-- 书本封面/背景 -->
+        <div class="book-cover">
+          <div class="book-spine"></div>
+          
+          <!-- 左页（图片页） -->
+          <div class="book-page left-page">
+            <div class="page-content">
+              <div class="image-frame">
+                <img 
+                  id="storyImage" 
+                  src={story.images.pages[0]} 
+                  alt={`${story.config.title} - 第1页`}
+                  loading="lazy"
+                  class="story-image"
+                />
               </div>
             </div>
-            <div class="audio-options">
-              <select id="speedSelect" class="speed-select">
-                <option value="0.8">慢速</option>
-                <option value="1" selected>正常</option>
-                <option value="1.2">快速</option>
-              </select>
+          </div>
+
+          <!-- 右页（文字页） -->
+          <div class="book-page right-page">
+            <div class="page-content">
+              <div class="text-content">
+                <p id="storyText" class="story-text">
+                  {story.config.pages[0]}
+                </p>
+              </div>
+              
+              <!-- 页面底部控制区域 -->
+              <div class="page-controls">
+                <!-- 语音控制区域（预留） -->
+                <div class="audio-controls" style="display: none;">
+                  <button id="playPauseBtn" class="audio-btn">
+                    <svg id="playIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polygon points="5,3 19,12 5,21"/>
+                    </svg>
+                    <svg id="pauseIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                      <rect x="6" y="4" width="4" height="16"/>
+                      <rect x="14" y="4" width="4" height="16"/>
+                    </svg>
+                  </button>
+                  <div class="audio-progress">
+                    <div class="progress-bar">
+                      <div class="progress-fill"></div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- 页码指示器 -->
+                <div class="page-indicator">
+                  <span class="current-page-info">第 <span id="currentPageNum">1</span> 页</span>
+                </div>
+              </div>
             </div>
           </div>
+        </div>
 
-          <!-- 导航按钮 -->
-          <div class="navigation-controls">
-            <button id="prevBtn" class="nav-btn" disabled>
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="m15 18-6-6 6-6"/>
-              </svg>
-              上一页
-            </button>
-            <button id="nextBtn" class="nav-btn">
-              下一页
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="m9 18 6-6-6-6"/>
-              </svg>
-            </button>
-          </div>
+        <!-- 翻页控制按钮 -->
+        <div class="navigation-controls">
+          <button id="prevBtn" class="page-turn-btn prev-btn" disabled>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m15 18-6-6 6-6"/>
+            </svg>
+          </button>
+          <button id="nextBtn" class="page-turn-btn next-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m9 18 6-6-6-6"/>
+            </svg>
+          </button>
+        </div>
 
-          <!-- 全屏阅读按钮 -->
-          <div class="reading-options">
-            <button id="fullscreenBtn" class="option-btn">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
-              </svg>
-              全屏阅读
-            </button>
-          </div>
+        <!-- 阅读选项 -->
+        <div class="reading-options">
+          <button id="fullscreenBtn" class="option-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+            </svg>
+            全屏阅读
+          </button>
         </div>
       </div>
     </div>
@@ -125,8 +131,8 @@ if (!story) {
     storyAudios: story.audios?.pages || [],
     storyTitle: story.config.title
   }}>
-    // 故事阅读器功能
-    class StoryReader {
+    // 书本阅读器功能
+    class BookReader {
       constructor(pages, images, audios, title) {
         this.pages = pages;
         this.images = images;
@@ -146,12 +152,13 @@ if (!story) {
       initElements() {
         this.storyImage = document.getElementById('storyImage');
         this.storyText = document.getElementById('storyText');
-        this.currentPageSpan = document.getElementById('currentPage');
-        this.totalPagesSpan = document.getElementById('totalPages');
+        this.currentPageNumSpan = document.getElementById('currentPageNum');
         this.prevBtn = document.getElementById('prevBtn');
         this.nextBtn = document.getElementById('nextBtn');
         this.fullscreenBtn = document.getElementById('fullscreenBtn');
-        this.storyContent = document.getElementById('storyContent');
+        this.bookContainer = document.getElementById('bookContainer');
+        this.leftPage = document.querySelector('.left-page');
+        this.rightPage = document.querySelector('.right-page');
       }
 
       bindEvents() {
@@ -164,20 +171,33 @@ if (!story) {
           if (e.key === 'ArrowLeft') this.previousPage();
           if (e.key === 'ArrowRight') this.nextPage();
           if (e.key === 'Escape' && this.isFullscreen) this.exitFullscreen();
+          if (e.key === ' ') {
+            e.preventDefault();
+            this.nextPage();
+          }
         });
 
         // 全屏功能
         this.fullscreenBtn.addEventListener('click', () => this.toggleFullscreen());
 
+        // 点击页面翻页
+        this.leftPage.addEventListener('click', (e) => {
+          if (e.target !== this.storyImage) this.previousPage();
+        });
+        
+        this.rightPage.addEventListener('click', (e) => {
+          if (!e.target.closest('.page-controls')) this.nextPage();
+        });
+
         // 触摸滑动支持（移动端）
         let startX = 0;
         let endX = 0;
         
-        this.storyContent.addEventListener('touchstart', (e) => {
+        this.bookContainer.addEventListener('touchstart', (e) => {
           startX = e.touches[0].clientX;
         }, { passive: true });
         
-        this.storyContent.addEventListener('touchend', (e) => {
+        this.bookContainer.addEventListener('touchend', (e) => {
           endX = e.changedTouches[0].clientX;
           const diff = startX - endX;
           
@@ -192,34 +212,46 @@ if (!story) {
       }
 
       updatePage() {
-        // 更新图片
-        this.storyImage.src = this.images[this.currentPage];
-        this.storyImage.alt = `${this.title} - 第${this.currentPage + 1}页`;
-        
-        // 图片加载错误处理
-        this.storyImage.onerror = () => {
-          console.warn(`图片加载失败: ${this.images[this.currentPage]}`);
-          // 可以设置默认图片或显示加载失败提示
-        };
-        
-        // 更新文字
-        this.storyText.textContent = this.pages[this.currentPage];
-        
-        // 更新页码
-        this.currentPageSpan.textContent = this.currentPage + 1;
-        
-        // 更新按钮状态
-        this.prevBtn.disabled = this.currentPage === 0;
-        this.nextBtn.disabled = this.currentPage === this.totalPages - 1;
-        
-        // 添加页面切换动画
-        this.storyImage.style.opacity = '0';
-        this.storyText.style.opacity = '0';
+        // 添加翻页动画
+        this.addPageTurnAnimation();
         
         setTimeout(() => {
-          this.storyImage.style.opacity = '1';
-          this.storyText.style.opacity = '1';
-        }, 150);
+          // 更新图片
+          this.storyImage.src = this.images[this.currentPage];
+          this.storyImage.alt = `${this.title} - 第${this.currentPage + 1}页`;
+          
+          // 图片加载错误处理
+          this.storyImage.onerror = () => {
+            console.warn(`图片加载失败: ${this.images[this.currentPage]}`);
+            // 可以设置默认图片或显示加载失败提示
+          };
+          
+          // 更新文字
+          this.storyText.textContent = this.pages[this.currentPage];
+          
+          // 更新页码
+          this.currentPageNumSpan.textContent = this.currentPage + 1;
+          
+          // 更新按钮状态
+          this.prevBtn.disabled = this.currentPage === 0;
+          this.nextBtn.disabled = this.currentPage === this.totalPages - 1;
+          
+          this.removePageTurnAnimation();
+        }, 200);
+      }
+
+      addPageTurnAnimation() {
+        this.leftPage.style.transform = 'rotateY(-10deg)';
+        this.rightPage.style.transform = 'rotateY(10deg)';
+        this.leftPage.style.opacity = '0.8';
+        this.rightPage.style.opacity = '0.8';
+      }
+
+      removePageTurnAnimation() {
+        this.leftPage.style.transform = 'rotateY(0deg)';
+        this.rightPage.style.transform = 'rotateY(0deg)';
+        this.leftPage.style.opacity = '1';
+        this.rightPage.style.opacity = '1';
       }
 
       previousPage() {
@@ -245,10 +277,11 @@ if (!story) {
       }
 
       enterFullscreen() {
-        this.storyContent.classList.add('fullscreen');
+        this.bookContainer.classList.add('fullscreen');
+        document.body.style.overflow = 'hidden';
         this.isFullscreen = true;
         this.fullscreenBtn.innerHTML = `
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>
           </svg>
           退出全屏
@@ -256,10 +289,11 @@ if (!story) {
       }
 
       exitFullscreen() {
-        this.storyContent.classList.remove('fullscreen');
+        this.bookContainer.classList.remove('fullscreen');
+        document.body.style.overflow = '';
         this.isFullscreen = false;
         this.fullscreenBtn.innerHTML = `
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
           </svg>
           全屏阅读
@@ -269,290 +303,486 @@ if (!story) {
       initAudioControls() {
         const audioControls = document.querySelector('.audio-controls');
         if (this.hasAudio && audioControls) {
-          audioControls.style.display = 'block';
+          audioControls.style.display = 'flex';
           // TODO: 当音频文件可用时，在这里初始化音频播放功能
           console.log('音频功能预留：', this.audios);
         }
       }
     }
 
-    // 初始化故事阅读器
+    // 初始化书本阅读器
     document.addEventListener('DOMContentLoaded', () => {
-      new StoryReader(storyPages, storyImages, storyAudios, storyTitle);
+      new BookReader(storyPages, storyImages, storyAudios, storyTitle);
     });
   </script>
 
   <style>
-    .story-reader {
-      min-height: 100vh;
-      background: linear-gradient(135deg, #ffeef3 0%, #f0f8ff 100%);
+    /* 全局样式 */
+    * {
+      box-sizing: border-box;
     }
 
+    .story-reader {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #8B4513 0%, #D2691E 20%, #F4A460 40%, #DEB887 100%);
+      background-attachment: fixed;
+      position: relative;
+    }
+
+    /* 导航栏样式 */
     .story-nav {
-      background: rgba(255, 255, 255, 0.95);
+      background: rgba(139, 69, 19, 0.95);
       backdrop-filter: blur(10px);
       padding: 1rem 2rem;
-      border-bottom: 1px solid #e5e7eb;
+      border-bottom: 2px solid #8B4513;
       position: sticky;
       top: 0;
-      z-index: 10;
+      z-index: 100;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
     }
 
     .back-btn {
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
-      color: #6b7280;
+      color: #F5DEB3;
       text-decoration: none;
       font-size: 0.9rem;
       margin-bottom: 0.5rem;
-      transition: color 0.2s;
+      transition: all 0.2s;
+      font-weight: 500;
     }
 
     .back-btn:hover {
-      color: #ff69b4;
+      color: #FFE4B5;
+      transform: translateX(-3px);
+    }
+
+    .book-info {
+      color: #F5DEB3;
     }
 
     .story-title {
       font-size: 1.8rem;
       font-weight: bold;
-      color: #333;
+      color: #F5DEB3;
       margin: 0.5rem 0;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
     }
 
     .story-meta {
       display: flex;
-      gap: 1rem;
+      gap: 1.5rem;
       font-size: 0.9rem;
-      color: #6b7280;
+      color: #DEB887;
     }
 
-    .story-content {
-      max-width: 1200px;
-      margin: 0 auto;
+    /* 书本容器 */
+    .book-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: calc(100vh - 120px);
       padding: 2rem;
+      perspective: 1000px;
     }
 
-    .page-container {
-      display: grid;
-      grid-template-columns: 1fr 400px;
-      gap: 2rem;
-      align-items: start;
+    .book-wrapper {
+      position: relative;
+      max-width: 1200px;
+      width: 100%;
     }
 
-    .story-image-container {
-      background: white;
+    /* 书本封面/背景 */
+    .book-cover {
+      position: relative;
+      display: flex;
+      width: 100%;
+      height: 600px;
+      background: linear-gradient(45deg, #654321, #8B4513);
+      border-radius: 15px;
+      box-shadow: 
+        0 20px 40px rgba(0, 0, 0, 0.4),
+        inset 0 2px 4px rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+      transform-style: preserve-3d;
+    }
+
+    /* 书脊效果 */
+    .book-spine {
+      position: absolute;
+      left: 50%;
+      top: 0;
+      width: 8px;
+      height: 100%;
+      background: linear-gradient(to right, #4A4A4A, #2C2C2C, #4A4A4A);
+      transform: translateX(-50%);
+      z-index: 10;
+      box-shadow: 
+        -2px 0 4px rgba(0, 0, 0, 0.3),
+        2px 0 4px rgba(0, 0, 0, 0.3);
+    }
+
+    /* 书页样式 */
+    .book-page {
+      flex: 1;
+      height: 100%;
+      background: #FFFEF7;
+      margin: 20px;
+      border-radius: 8px;
+      box-shadow: 
+        inset 0 0 20px rgba(139, 69, 19, 0.1),
+        0 5px 15px rgba(0, 0, 0, 0.2);
+      position: relative;
+      transition: all 0.3s ease;
+      transform-origin: center center;
+    }
+
+    .book-page::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(
+        45deg,
+        transparent 0%,
+        rgba(139, 69, 19, 0.03) 25%,
+        transparent 50%,
+        rgba(139, 69, 19, 0.03) 75%,
+        transparent 100%
+      );
+      background-size: 20px 20px;
+      pointer-events: none;
+    }
+
+    .left-page {
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+      margin-right: 4px;
+    }
+
+    .right-page {
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+      margin-left: 4px;
+    }
+
+    /* 页面内容 */
+    .page-content {
+      padding: 20px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* 左页内容调整 */
+    .left-page .page-content {
+      padding: 15px;
+    }
+
+    /* 右页内容调整 */
+    .right-page .page-content {
+      padding: 25px;
+    }
+
+    /* 图片框架 */
+    .image-frame {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #F9F9F9;
+      border: 3px solid #D2691E;
       border-radius: 12px;
       overflow: hidden;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-      position: sticky;
-      top: 120px;
+      box-shadow: 
+        inset 0 0 20px rgba(0, 0, 0, 0.1),
+        0 5px 15px rgba(0, 0, 0, 0.2);
+      margin: 0;
     }
 
     .story-image {
       width: 100%;
-      height: auto;
-      display: block;
-      transition: opacity 0.3s ease;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      transition: all 0.3s ease;
+      filter: sepia(5%) brightness(1.05) contrast(1.1);
     }
 
-    .story-sidebar {
-      background: white;
-      border-radius: 12px;
-      padding: 2rem;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-      position: sticky;
-      top: 120px;
-      max-height: calc(100vh - 140px);
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem;
+    .story-image:hover {
+      transform: scale(1.02);
     }
 
-    .page-info {
-      text-align: center;
-      font-size: 1.1rem;
-      color: #6b7280;
-      font-weight: 500;
-    }
-
-    .story-text-container {
+    /* 文字内容区域 */
+    .text-content {
       flex: 1;
-      min-height: 200px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      margin: 0;
+      padding: 25px 20px;
+      background: rgba(255, 248, 220, 0.5);
+      border-radius: 8px;
+      border-left: 4px solid #D2691E;
     }
 
     .story-text {
       font-size: 1.1rem;
       line-height: 1.8;
-      color: #333;
+      color: #2C1810;
       margin: 0;
-      transition: opacity 0.3s ease;
+      font-family: 'Georgia', serif;
+      text-align: justify;
+      text-indent: 2em;
+    }
+
+    /* 页面控制区域 */
+    .page-controls {
+      margin-top: 20px;
+      padding-top: 15px;
     }
 
     .audio-controls {
-      padding: 1rem;
-      background: #f8fafc;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      padding: 15px;
+      background: rgba(139, 69, 19, 0.1);
       border-radius: 8px;
-      border: 1px solid #e5e7eb;
+      margin-bottom: 15px;
     }
 
     .audio-btn {
-      background: #ff69b4;
+      background: #D2691E;
       border: none;
       border-radius: 50%;
-      width: 48px;
-      height: 48px;
+      width: 40px;
+      height: 40px;
       display: flex;
       align-items: center;
       justify-content: center;
       color: white;
       cursor: pointer;
       transition: all 0.2s;
-      margin-bottom: 1rem;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
     }
 
     .audio-btn:hover {
-      background: #ff1493;
+      background: #CD853F;
       transform: scale(1.05);
     }
 
     .audio-progress {
-      margin: 1rem 0;
+      flex: 1;
     }
 
     .progress-bar {
       width: 100%;
       height: 4px;
-      background: #e5e7eb;
+      background: rgba(139, 69, 19, 0.2);
       border-radius: 2px;
       overflow: hidden;
     }
 
     .progress-fill {
       height: 100%;
-      background: #ff69b4;
+      background: #D2691E;
       width: 0%;
       transition: width 0.1s;
     }
 
-    .speed-select {
-      padding: 0.5rem;
-      border: 1px solid #e5e7eb;
-      border-radius: 6px;
-      background: white;
-      font-size: 0.9rem;
-    }
-
-    .navigation-controls {
+    .page-indicator {
       display: flex;
-      gap: 1rem;
-    }
-
-    .nav-btn {
-      flex: 1;
-      padding: 0.75rem 1rem;
-      border: 2px solid #ff69b4;
-      background: white;
-      color: #ff69b4;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: flex;
+      justify-content: flex-end;
       align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
+      font-size: 0.9rem;
+      color: #8B4513;
       font-weight: 500;
     }
 
-    .nav-btn:hover:not(:disabled) {
-      background: #ff69b4;
-      color: white;
-      transform: translateY(-2px);
+    .current-page-info {
+      font-style: italic;
     }
 
-    .nav-btn:disabled {
-      opacity: 0.5;
+    /* 翻页控制按钮 */
+    .navigation-controls {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    .page-turn-btn {
+      background: rgba(139, 69, 19, 0.8);
+      border: none;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #F5DEB3;
+      cursor: pointer;
+      transition: all 0.3s;
+      pointer-events: auto;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(5px);
+    }
+
+    .page-turn-btn:hover:not(:disabled) {
+      background: rgba(139, 69, 19, 0.95);
+      transform: scale(1.1);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .page-turn-btn:disabled {
+      opacity: 0.3;
       cursor: not-allowed;
       transform: none;
     }
 
+    .prev-btn {
+      left: -25px;
+    }
+
+    .next-btn {
+      right: -25px;
+    }
+
+    /* 阅读选项 */
+    .reading-options {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      z-index: 20;
+    }
+
     .option-btn {
-      width: 100%;
-      padding: 0.75rem;
-      border: 1px solid #e5e7eb;
-      background: #f8fafc;
-      color: #6b7280;
-      border-radius: 8px;
+      background: rgba(139, 69, 19, 0.8);
+      border: none;
+      color: #F5DEB3;
+      padding: 8px 12px;
+      border-radius: 20px;
       cursor: pointer;
       transition: all 0.2s;
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
+      gap: 6px;
+      font-size: 0.8rem;
+      backdrop-filter: blur(5px);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
     }
 
     .option-btn:hover {
-      background: #e5e7eb;
-      color: #374151;
+      background: rgba(139, 69, 19, 0.95);
+      transform: translateY(-2px);
     }
 
     /* 全屏模式 */
-    .story-content.fullscreen {
+    .book-container.fullscreen {
       position: fixed;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
-      background: #000;
+      background: #1a1a1a;
       z-index: 9999;
-      padding: 2rem;
-      overflow: auto;
+      padding: 40px;
     }
 
-    .story-content.fullscreen .page-container {
-      max-width: none;
-      height: 100%;
-      grid-template-columns: 1fr 350px;
-    }
-
-    .story-content.fullscreen .story-image-container {
-      position: static;
-    }
-
-    .story-content.fullscreen .story-sidebar {
-      position: static;
+    .book-container.fullscreen .book-cover {
+      height: calc(100vh - 80px);
       max-height: none;
-      height: fit-content;
+    }
+
+    .book-container.fullscreen .story-image {
+      filter: brightness(1.1) contrast(1.2);
+    }
+
+    /* 悬停效果 */
+    .book-page:hover {
+      transform: translateY(-2px);
+      box-shadow: 
+        inset 0 0 20px rgba(139, 69, 19, 0.15),
+        0 10px 25px rgba(0, 0, 0, 0.3);
     }
 
     /* 响应式布局 */
     @media (max-width: 1024px) {
-      .page-container {
-        grid-template-columns: 1fr 350px;
+      .book-cover {
+        height: 500px;
+      }
+      
+      .page-content {
+        padding: 20px;
+      }
+
+      .left-page .page-content {
+        padding: 15px;
+      }
+
+      .right-page .page-content {
+        padding: 20px;
+      }
+      
+      .story-text {
+        font-size: 1rem;
       }
     }
 
     @media (max-width: 768px) {
-      .story-content {
+      .book-container {
         padding: 1rem;
       }
 
-      .page-container {
-        grid-template-columns: 1fr;
-        gap: 1.5rem;
+      .book-cover {
+        flex-direction: column;
+        height: auto;
+        min-height: 80vh;
       }
 
-      .story-image-container,
-      .story-sidebar {
-        position: static;
+      .book-page {
+        margin: 8px;
+        min-height: 300px;
       }
 
-      .story-sidebar {
-        max-height: none;
+      .left-page {
+        border-radius: 8px 8px 0 0;
+        margin-bottom: 2px;
       }
 
-      .story-nav {
-        padding: 1rem;
+      .right-page {
+        border-radius: 0 0 8px 8px;
+        margin-top: 2px;
+      }
+
+      .book-spine {
+        left: 0;
+        right: 0;
+        top: 50%;
+        width: 100%;
+        height: 8px;
+        transform: translateY(-50%);
+      }
+
+      .page-content {
+        padding: 15px;
+      }
+
+      .left-page .page-content {
+        padding: 12px;
+      }
+
+      .right-page .page-content {
+        padding: 18px;
       }
 
       .story-title {
@@ -565,34 +795,122 @@ if (!story) {
       }
 
       .navigation-controls {
-        flex-direction: column;
+        position: static;
+        transform: none;
+        justify-content: center;
+        gap: 20px;
+        margin-top: 20px;
       }
 
-      .nav-btn {
+      .page-turn-btn {
+        position: static;
+        margin: 0;
+      }
+
+      .reading-options {
+        position: static;
+        display: flex;
         justify-content: center;
+        margin-top: 15px;
       }
 
       /* 移动端全屏模式调整 */
-      .story-content.fullscreen {
-        padding: 1rem;
+      .book-container.fullscreen {
+        padding: 20px;
       }
 
-      .story-content.fullscreen .page-container {
-        grid-template-columns: 1fr;
+      .book-container.fullscreen .book-cover {
+        height: calc(100vh - 40px);
       }
     }
 
     @media (max-width: 480px) {
-      .story-content {
+      .book-container {
         padding: 0.5rem;
       }
 
-      .story-sidebar {
-        padding: 1.5rem;
+      .page-content {
+        padding: 12px;
+      }
+
+      .left-page .page-content {
+        padding: 10px;
+      }
+
+      .right-page .page-content {
+        padding: 15px;
       }
 
       .story-text {
-        font-size: 1rem;
+        font-size: 0.95rem;
+        line-height: 1.6;
+      }
+
+      .story-nav {
+        padding: 1rem;
+      }
+
+      .book-cover {
+        margin: 0;
+        border-radius: 10px;
+      }
+
+      .book-page {
+        margin: 5px;
+      }
+
+      .text-content {
+        padding: 20px 15px;
+      }
+    }
+
+    /* 深色模式支持 */
+    @media (prefers-color-scheme: dark) {
+      .book-page {
+        background: #2D2D2D;
+        color: #E0E0E0;
+      }
+
+      .story-text {
+        color: #E0E0E0;
+      }
+
+      .text-content {
+        background: rgba(255, 248, 220, 0.1);
+      }
+
+      .image-frame {
+        background: #1A1A1A;
+        border-color: #8B4513;
+      }
+
+      .story-image {
+        filter: sepia(5%) brightness(0.9) contrast(1.1);
+      }
+    }
+
+    /* 打印样式 */
+    @media print {
+      .story-nav,
+      .navigation-controls,
+      .reading-options,
+      .audio-controls {
+        display: none !important;
+      }
+
+      .book-container {
+        padding: 0;
+        background: white;
+      }
+
+      .book-cover {
+        box-shadow: none;
+        height: auto;
+      }
+
+      .book-page {
+        box-shadow: none;
+        page-break-inside: avoid;
       }
     }
   </style>

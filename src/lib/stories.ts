@@ -88,15 +88,13 @@ export async function getAllStories(): Promise<Story[]> {
           ]
         };
         
-        // 简单粗暴复制10份相同的故事
-        for (let i = 1; i <= 10; i++) {
-          stories.push({
-            id: `${storyId}_${i}`,
-            config,
-            images,
-            audios // 包含音频路径，但文件暂时不存在
-          });
-        }
+        // 创建故事对象
+        stories.push({
+          id: storyId, // 直接使用原始的故事ID
+          config,
+          images,
+          audios // 包含音频路径，但文件暂时不存在
+        });
         
       } catch (error) {
         console.error(`Error loading story config for ${storyId}:`, error);
