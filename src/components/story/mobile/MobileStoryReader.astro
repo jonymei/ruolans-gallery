@@ -142,8 +142,13 @@ const { story } = Astro.props;
       if (!textWrapper) return;
 
       const headerHeight = mobileHeader.offsetHeight;
+      // 获取当前页面的音频播放器高度
+      const audioPlayerWrapper = pageSections[index].querySelector('.audio-player-wrapper') as HTMLElement;
+      const audioPlayerHeight = audioPlayerWrapper ? audioPlayerWrapper.offsetHeight : 0;
+      
       const elementTop = (textWrapper as HTMLElement).getBoundingClientRect().top + window.pageYOffset;
-      const scrollToPosition = elementTop - headerHeight - 16; // 16px of top margin
+      // 考虑头部高度、播放器高度和额外边距
+      const scrollToPosition = elementTop - headerHeight + audioPlayerHeight - 2;
 
       window.scrollTo({
         top: scrollToPosition,
