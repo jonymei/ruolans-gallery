@@ -21,7 +21,10 @@ const { story } = Astro.props;
     <div class="header-title-container">
       <h1 class="story-title" title={story.config.title}>{story.config.title}</h1>
     </div>
-    <div class="header-spacer"></div>
+    <button id="autoplay-toggle" class="autoplay-btn" title="自动播放">
+      <svg id="play-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M6 3v18l15-9L6 3z"/></svg>
+      <svg id="pause-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon hidden"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+    </button>
   </header>
 
   <!-- 故事内容 -->
@@ -60,19 +63,136 @@ const { story } = Astro.props;
 </div>
 
 <script>
-  // 管理音频播放，确保同一时间只有一个音频在播放
   document.addEventListener('DOMContentLoaded', function() {
     const audioPlayers = document.querySelectorAll('.audio-player') as NodeListOf<HTMLAudioElement>;
-    
-    audioPlayers.forEach(audio => {
-      audio.addEventListener('play', function() {
-        // 暂停其他所有正在播放的音频
-        audioPlayers.forEach(otherAudio => {
-          if (otherAudio !== audio && !otherAudio.paused) {
-            otherAudio.pause();
+    const pageSections = document.querySelectorAll('.story-page-section') as NodeListOf<HTMLElement>;
+    const autoplayToggle = document.getElementById('autoplay-toggle') as HTMLButtonElement;
+    const playIcon = document.getElementById('play-icon');
+    const pauseIcon = document.getElementById('pause-icon');
+    const mobileHeader = document.querySelector('.mobile-header') as HTMLElement;
+
+    let isAutoplaying = false;
+    let currentPlayingIndex = -1;
+    let visiblePageIndex = 0;
+
+    function updateAutoplayButton(isPlaying: boolean) {
+      if (!playIcon || !pauseIcon) return;
+      if (isPlaying) {
+        playIcon.classList.add('hidden');
+        pauseIcon.classList.remove('hidden');
+        autoplayToggle.setAttribute('title', '暂停自动播放');
+      } else {
+        playIcon.classList.remove('hidden');
+        pauseIcon.classList.add('hidden');
+        autoplayToggle.setAttribute('title', '自动播放');
+      }
+    }
+
+    function stopAutoplay() {
+      if (!isAutoplaying) return;
+      isAutoplaying = false;
+      updateAutoplayButton(false);
+      if (currentPlayingIndex !== -1 && !audioPlayers[currentPlayingIndex].paused) {
+        audioPlayers[currentPlayingIndex].pause();
+      }
+    }
+
+    function startAutoplay(startFromIndex: number) {
+      if (isAutoplaying) return;
+      isAutoplaying = true;
+      updateAutoplayButton(true);
+      
+      const alreadyPlayingIndex = Array.from(audioPlayers).findIndex(p => !p.paused);
+      if (alreadyPlayingIndex !== -1) {
+        currentPlayingIndex = alreadyPlayingIndex;
+        scrollToPage(currentPlayingIndex);
+        return;
+      }
+
+      if (startFromIndex >= 0 && startFromIndex < audioPlayers.length) {
+        currentPlayingIndex = startFromIndex;
+        audioPlayers[currentPlayingIndex].play();
+      }
+    }
+
+    autoplayToggle.addEventListener('click', () => {
+      if (isAutoplaying) {
+        stopAutoplay();
+      } else {
+        startAutoplay(visiblePageIndex);
+      }
+    });
+
+    function scrollToPage(index: number) {
+      if (index < 0 || index >= pageSections.length) return;
+      
+      const textWrapper = pageSections[index].querySelector('.text-wrapper');
+      if (!textWrapper) return;
+
+      const headerHeight = mobileHeader.offsetHeight;
+      const elementTop = (textWrapper as HTMLElement).getBoundingClientRect().top + window.pageYOffset;
+      const scrollToPosition = elementTop - headerHeight - 16; // 16px of top margin
+
+      window.scrollTo({
+        top: scrollToPosition,
+        behavior: 'smooth'
+      });
+    }
+
+    audioPlayers.forEach((player, index) => {
+      player.addEventListener('play', () => {
+        audioPlayers.forEach(otherPlayer => {
+          if (otherPlayer !== player && !otherPlayer.paused) {
+            otherPlayer.pause();
           }
         });
+        currentPlayingIndex = index;
+        scrollToPage(index);
       });
+
+      player.addEventListener('pause', () => {
+        if (isAutoplaying && currentPlayingIndex === index && !player.ended) {
+          setTimeout(() => {
+            const isAnyAudioPlaying = Array.from(audioPlayers).some(p => !p.paused);
+            if (isAutoplaying && !isAnyAudioPlaying) {
+              stopAutoplay();
+            }
+          }, 50);
+        }
+      });
+
+      player.addEventListener('ended', () => {
+        if (isAutoplaying) {
+          const nextIndex = index + 1;
+          if (nextIndex < audioPlayers.length) {
+            currentPlayingIndex = nextIndex;
+            audioPlayers[nextIndex].play();
+          } else {
+            stopAutoplay();
+          }
+        }
+      });
+    });
+
+    const observerOptions = {
+      root: null,
+      rootMargin: `-${mobileHeader.offsetHeight}px 0px -40% 0px`,
+      threshold: 0.1
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const id = entry.target.id;
+          if (id) {
+            visiblePageIndex = parseInt(id.split('-')[1]) - 1;
+          }
+        }
+      });
+    }, observerOptions);
+
+    pageSections.forEach(section => {
+      observer.observe(section);
     });
   });
 </script>
@@ -128,8 +248,24 @@ const { story } = Astro.props;
     margin: 0;
   }
 
-  .header-spacer {
-    visibility: hidden;
+  .autoplay-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem;
+    color: #a855f7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .autoplay-btn:focus, .autoplay-btn:focus-visible {
+    outline: none;
+    box-shadow: none;
+  }
+
+  .autoplay-btn .icon.hidden {
+    display: none;
   }
 
   /* 内容区域 */
