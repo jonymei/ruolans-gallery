@@ -35,7 +35,19 @@ const { story } = Astro.props;
           <!-- 音频播放器 -->
           {story.audios && story.audios.pages[index] && (
             <div class="audio-player-wrapper">
-              <audio controls src={story.audios.pages[index]} preload="metadata" class="audio-player"></audio>
+              <div class="custom-audio-player">
+                <button class="play-pause-btn" aria-label="播放/暂停">
+                  <svg class="play-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v18l15-9L6 3z"/></svg>
+                  <svg class="pause-icon hidden" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+                </button>
+                <div class="progress-bar-container">
+                  <div class="progress-bar-bg">
+                    <div class="progress-bar"></div>
+                  </div>
+                </div>
+                <div class="time-display">0:00 / 0:00</div>
+              </div>
+              <audio src={story.audios.pages[index]} preload="metadata" class="audio-player" style="display: none;"></audio>
             </div>
           )}
           
@@ -139,9 +151,67 @@ const { story } = Astro.props;
       });
     }
 
+    // --- Custom Audio Player Logic ---
+    const customPlayers = document.querySelectorAll('.custom-audio-player');
+
+    customPlayers.forEach((player, index) => {
+      const audio = audioPlayers[index];
+      const playPauseBtn = player.querySelector('.play-pause-btn') as HTMLButtonElement;
+      const playIcon = playPauseBtn.querySelector('.play-icon');
+      const pauseIcon = playPauseBtn.querySelector('.pause-icon');
+      const progressBar = player.querySelector('.progress-bar') as HTMLDivElement;
+      const progressBarContainer = player.querySelector('.progress-bar-container') as HTMLDivElement;
+      const timeDisplay = player.querySelector('.time-display') as HTMLDivElement;
+
+      function formatTime(seconds: number) {
+        const minutes = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${minutes}:${secs.toString().padStart(2, '0')}`;
+      }
+
+      function updateProgress() {
+        const percent = (audio.currentTime / audio.duration) * 100;
+        progressBar.style.width = `${percent}%`;
+        timeDisplay.textContent = `${formatTime(audio.currentTime)} / ${formatTime(audio.duration)}`;
+      }
+
+      function setProgress(e: MouseEvent) {
+        const width = progressBarContainer.clientWidth;
+        const clickX = e.offsetX;
+        audio.currentTime = (clickX / width) * audio.duration;
+      }
+
+      playPauseBtn.addEventListener('click', () => {
+        if (audio.paused) {
+          audio.play();
+        } else {
+          audio.pause();
+        }
+      });
+
+      audio.addEventListener('play', () => {
+        playIcon?.classList.add('hidden');
+        pauseIcon?.classList.remove('hidden');
+      });
+
+      audio.addEventListener('pause', () => {
+        playIcon?.classList.remove('hidden');
+        pauseIcon?.classList.add('hidden');
+      });
+
+      audio.addEventListener('timeupdate', updateProgress);
+
+      audio.addEventListener('loadedmetadata', () => {
+        timeDisplay.textContent = `0:00 / ${formatTime(audio.duration)}`;
+      });
+
+      progressBarContainer.addEventListener('click', setProgress);
+    });
+
+
     audioPlayers.forEach((player, index) => {
       player.addEventListener('play', () => {
-        audioPlayers.forEach(otherPlayer => {
+        audioPlayers.forEach((otherPlayer, otherIndex) => {
           if (otherPlayer !== player && !otherPlayer.paused) {
             otherPlayer.pause();
           }
@@ -337,6 +407,67 @@ const { story } = Astro.props;
     border-radius: 12px;
     background: rgba(255, 255, 255, 0.7);
     backdrop-filter: blur(8px);
+  }
+
+  /* 自定义播放器样式 */
+  .custom-audio-player {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.25rem 0.5rem;
+  }
+
+  .play-pause-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem;
+    color: #a855f7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .play-pause-btn:focus, .play-pause-btn:focus-visible {
+    outline: none;
+    box-shadow: none;
+  }
+
+  .play-pause-btn .hidden {
+    display: none;
+  }
+
+  .progress-bar-container {
+    flex-grow: 1;
+    height: 10px;
+    background-color: rgba(168, 85, 247, 0.15);
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+  }
+
+  .progress-bar-bg {
+    width: 100%;
+    height: 4px;
+    background-color: rgba(168, 85, 247, 0.25);
+    border-radius: 2px;
+    margin: 0 2px;
+  }
+
+  .progress-bar {
+    height: 100%;
+    width: 0;
+    background-color: #a855f7;
+    border-radius: 2px;
+  }
+
+  .time-display {
+    font-size: 0.75rem;
+    color: #581c87;
+    min-width: 70px;
+    text-align: center;
   }
   
   /* 文本 */
