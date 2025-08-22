@@ -66,9 +66,6 @@ const { story } = Astro.props;
             />
           </div>
         </div>
-        <div class="page-number">
-          - {index + 1} -
-        </div>
       </section>
     ))}
   </main>
@@ -349,10 +346,9 @@ const { story } = Astro.props;
   }
 
   .story-page-section {
-    margin-bottom: 2rem;
-    padding-bottom: 2rem;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
     border-bottom: 1px solid rgba(236, 72, 153, 0.15);
-    text-align: center; /* 居中页码 */
   }
 
   .story-page-section:last-of-type {
@@ -500,20 +496,5 @@ const { story } = Astro.props;
     width: 100%;
     height: auto;
     object-fit: cover;
-  }
-
-  /* 页码 */
-  .page-number {
-    text-align: center;
-    margin-top: 1.5rem;
-    color: #9ca3af;
-    font-size: 0.9rem;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.3));
-    backdrop-filter: blur(4px);
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    border: 1px solid rgba(236, 72, 153, 0.1);
-    display: inline-block;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   }
 </style>
