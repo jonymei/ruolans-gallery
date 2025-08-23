@@ -83,6 +83,7 @@ const { story } = Astro.props;
     let isAutoplaying = false;
     let currentPlayingIndex = -1;
     let visiblePageIndex = 0;
+    let isAutoTriggeredPlay = false; // 标记是否为自动触发的播放
 
     function updateAutoplayButton(isPlaying: boolean) {
       if (!playIcon || !pauseIcon) return;
@@ -120,6 +121,7 @@ const { story } = Astro.props;
 
       if (startFromIndex >= 0 && startFromIndex < audioPlayers.length) {
         currentPlayingIndex = startFromIndex;
+        isAutoTriggeredPlay = true; // 标记为自动触发
         audioPlayers[currentPlayingIndex].play();
       }
     }
@@ -185,6 +187,7 @@ const { story } = Astro.props;
 
       playPauseBtn.addEventListener('click', () => {
         if (audio.paused) {
+          isAutoTriggeredPlay = false; // 用户手动播放，不是自动触发
           audio.play();
         } else {
           audio.pause();
@@ -194,6 +197,12 @@ const { story } = Astro.props;
       audio.addEventListener('play', () => {
         playIcon?.classList.add('hidden');
         pauseIcon?.classList.remove('hidden');
+        
+        // 如果是自动触发的播放，重置进度条
+        if (isAutoTriggeredPlay) {
+          audio.currentTime = 0;
+          isAutoTriggeredPlay = false; // 重置标记
+        }
       });
 
       audio.addEventListener('pause', () => {
@@ -238,6 +247,7 @@ const { story } = Astro.props;
           const nextIndex = index + 1;
           if (nextIndex < audioPlayers.length) {
             currentPlayingIndex = nextIndex;
+            isAutoTriggeredPlay = true; // 标记连续播放的下一首为自动触发
             audioPlayers[nextIndex].play();
           } else {
             stopAutoplay();
