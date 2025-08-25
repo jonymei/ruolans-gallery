@@ -9,7 +9,8 @@
     "astro": "astro",
     "tts": "node scripts/tts.js",
     "tts:all": "node scripts/tts.js all",
-    "tts:status": "node scripts/tts.js status"
+    "tts:status": "node scripts/tts.js status",
+    "import:gemini": "node scripts/import-gemini-story.js"
   },
   "dependencies": {
     "@astrojs/tailwind": "^6.0.2",
@@ -21,6 +22,7 @@
   "devDependencies": {
     "@types/is-mobile": "^0.3.0",
     "@types/js-yaml": "^4.0.9",
-    "dotenv": "^17.2.1"
+    "dotenv": "^17.2.1",
+    "playwright": "^1.55.0"
   }
 }
