@@ -21,21 +21,16 @@ const { story } = Astro.props;
     <div class="book-info">
       <h1 class="story-title">{story.config.title}</h1>
     </div>
-    <div class="controls-container">
-      <button id="autoplayToggle" class="autoplay-btn" title="自动播放">
-        <svg id="autoplayPlayIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polygon points="5,3 19,12 5,21"/>
-        </svg>
-        <svg id="autoplayPauseIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
-          <rect x="6" y="4" width="4" height="16"/>
-          <rect x="14" y="4" width="4" height="16"/>
-        </svg>
-        <span class="autoplay-text">自动播放</span>
-      </button>
-      <div class="page-indicator">
-        第 <span id="currentPageNum">1</span> / {story.config.pages.length} 页
-      </div>
-    </div>
+    <button id="autoplayToggle" class="autoplay-btn" title="自动播放">
+      <svg id="autoplayPlayIcon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="5,3 19,12 5,21"/>
+      </svg>
+      <svg id="autoplayPauseIcon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+        <rect x="6" y="4" width="4" height="16"/>
+        <rect x="14" y="4" width="4" height="16"/>
+      </svg>
+      <span class="autoplay-text">自动播放</span>
+    </button>
   </nav>
 
   <!-- 书本阅读器 -->
@@ -88,6 +83,11 @@ const { story } = Astro.props;
                 <span id="totalTime" class="audio-time-display">0:00</span>
               </div>
               <audio id="audioPlayer" preload="metadata"></audio>
+            </div>
+            
+            <!-- 页码指示器 -->
+            <div class="page-indicator">
+              第 <span id="currentPageNum">1</span> / {story.config.pages.length} 页
             </div>
           </div>
         </div>
@@ -515,50 +515,39 @@ const { story } = Astro.props;
     margin: 0;
   }
 
-  .controls-container {
+  /* Remove controls-container styles since we're not using it anymore */
+
+  .autoplay-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem;
+    color: #a855f7;
     display: flex;
     align-items: center;
-    gap: 1rem;
+    justify-content: center;
     flex-shrink: 0;
   }
 
-  .autoplay-btn {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: linear-gradient(135deg, #a855f7, #ec4899);
-    color: white;
-    border: none;
-    border-radius: 20px;
-    padding: 8px 16px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  }
-
-  .autoplay-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-  }
-
-  .autoplay-btn:active {
-    transform: translateY(0);
+  .autoplay-btn:focus, .autoplay-btn:focus-visible {
+    outline: none;
+    box-shadow: none;
   }
 
   .autoplay-text {
-    font-size: 0.85rem;
+    display: none; /* Hide text in desktop version to match mobile simplicity */
   }
 
   .page-indicator {
-    font-size: 0.9rem;
-    color: #4b5563;
+    font-size: 0.85rem;
+    color: #6b7280;
     font-weight: 500;
-    background-color: rgba(168, 85, 247, 0.1);
+    background-color: rgba(168, 85, 247, 0.08);
     padding: 6px 12px;
-    border-radius: 15px;
-    display: inline-block;
+    border-radius: 12px;
+    text-align: center;
+    margin-top: 8px;
+    border: 1px solid rgba(168, 85, 247, 0.15);
   }
 
   /* 书本容器 */
@@ -662,36 +651,31 @@ const { story } = Astro.props;
   .audio-controls {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 10px;
-    background-color: #f9fafb;
-    border-radius: 8px;
-    border: 1px solid #f3f4f6;
+    gap: 0.75rem;
     width: 100%;
+    padding: 0.25rem 0.5rem;
   }
 
   .audio-btn {
-    background: linear-gradient(135deg, #a855f7, #ec4899);
+    background: none;
     border: none;
-    border-radius: 50%;
-    width: 36px;
-    height: 36px;
+    cursor: pointer;
+    padding: 0.25rem;
+    color: #a855f7;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
-    cursor: pointer;
-    transition: all 0.2s ease;
     flex-shrink: 0;
   }
 
-  .audio-btn svg {
-    width: 18px;
-    height: 18px;
+  .audio-btn:focus, .audio-btn:focus-visible {
+    outline: none;
+    box-shadow: none;
   }
 
-  .audio-btn:hover {
-    transform: scale(1.1);
+  .audio-btn svg {
+    width: 20px;
+    height: 20px;
   }
 
   .audio-progress {
@@ -703,25 +687,28 @@ const { story } = Astro.props;
 
   .progress-bar {
     flex-grow: 1;
-    height: 4px;
-    background-color: #e5e7eb;
-    border-radius: 2px;
+    height: 10px;
+    background-color: rgba(168, 85, 247, 0.15);
+    border-radius: 5px;
     cursor: pointer;
+    display: flex;
+    align-items: center;
   }
 
   .progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #a855f7, #ec4899);
+    height: 4px;
     width: 0%;
+    background-color: #a855f7;
     border-radius: 2px;
+    margin: 0 2px;
   }
 
   .audio-time-display {
     font-size: 0.75rem;
-    color: #6b7280;
-    flex-shrink: 0;
-    width: 35px;
+    color: #581c87;
+    min-width: 70px;
     text-align: center;
+    flex-shrink: 0;
   }
 
   /* 翻页按钮 */
