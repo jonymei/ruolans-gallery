@@ -261,12 +261,14 @@ function generateYamlConfig(storyData) {
     author: '若兰',
     createdDate: new Date().toISOString().split('T')[0],
     tags: ['AI生成', '儿童故事'],
-    pages: storyData.pages.map((page) => ({ text: page.text })),
+    pages: storyData.pages.map((page) => page.text),
   }
 
   return yaml.dump(config, {
     allowUnicode: true,
     lineWidth: -1,
+    flowLevel: -1,
+    indent: 2,
   })
 }
 
