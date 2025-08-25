@@ -22,9 +22,11 @@ const { story } = Astro.props;
       <h1 class="story-title">{story.config.title}</h1>
     </div>
     <button id="autoplayToggle" class="autoplay-btn" title="自动播放">
+      <!-- 自动播放开启图标 (播放) -->
       <svg id="autoplayPlayIcon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <polygon points="5,3 19,12 5,21"/>
       </svg>
+      <!-- 自动播放关闭图标 (暂停) -->
       <svg id="autoplayPauseIcon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
         <rect x="6" y="4" width="4" height="16"/>
         <rect x="14" y="4" width="4" height="16"/>
@@ -422,8 +424,8 @@ const { story } = Astro.props;
       this.isAutoplaying = false;
       this.updateAutoplayButton();
       
-      // Don't pause current audio if playing manually
-      if (this.isAutoTriggeredPlay && this.isPlaying) {
+      // Always pause current audio when stopping auto-play
+      if (this.isPlaying) {
         this.pauseAudio();
       }
     }
@@ -518,24 +520,33 @@ const { story } = Astro.props;
   /* Remove controls-container styles since we're not using it anymore */
 
   .autoplay-btn {
-    background: none;
-    border: none;
+    background: rgba(168, 85, 247, 0.1);
+    border: 1px solid rgba(168, 85, 247, 0.2);
+    border-radius: 20px;
     cursor: pointer;
-    padding: 0.25rem;
+    padding: 6px 12px;
     color: #a855f7;
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 0.5rem;
     flex-shrink: 0;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+
+  .autoplay-btn:hover {
+    background: rgba(168, 85, 247, 0.15);
+    border-color: rgba(168, 85, 247, 0.3);
   }
 
   .autoplay-btn:focus, .autoplay-btn:focus-visible {
     outline: none;
-    box-shadow: none;
+    box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.2);
   }
 
   .autoplay-text {
-    display: none; /* Hide text in desktop version to match mobile simplicity */
+    display: inline; /* Show text for better clarity */
   }
 
   .page-indicator {
