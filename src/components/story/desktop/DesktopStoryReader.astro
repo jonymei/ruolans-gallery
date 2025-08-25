@@ -510,12 +510,6 @@ const { story } = Astro.props;
     border: 1px solid transparent;
   }
 
-  .back-btn:hover {
-    color: #ec4899;
-    background: rgba(236, 72, 153, 0.1);
-    border-color: rgba(236, 72, 153, 0.2);
-    transform: translateY(-2px);
-  }
 
   .book-info {
     text-align: center;
@@ -551,10 +545,6 @@ const { story } = Astro.props;
     transition: all 0.2s ease;
   }
 
-  .autoplay-btn:hover {
-    background: rgba(168, 85, 247, 0.15);
-    border-color: rgba(168, 85, 247, 0.3);
-  }
 
   .autoplay-btn:focus, .autoplay-btn:focus-visible {
     outline: none;
@@ -644,13 +634,6 @@ const { story } = Astro.props;
       0 0 8px rgba(139, 92, 246, 0.15);
   }
 
-  .book-wrapper:hover {
-    transform: scale(1.02);
-    box-shadow: 
-      0 35px 70px -12px rgba(0, 0, 0, 0.3),
-      0 20px 40px -8px rgba(0, 0, 0, 0.2),
-      inset 0 1px 0 rgba(255, 255, 255, 0.7);
-  }
 
   /* 书页样式 */
   .book-page {
@@ -884,11 +867,6 @@ const { story } = Astro.props;
     user-select: none;
   }
 
-  .left-page:hover, .right-page:hover {
-    background: 
-      linear-gradient(45deg, transparent 0%, rgba(255, 255, 255, 0.03) 25%, transparent 50%, rgba(255, 255, 255, 0.03) 75%, transparent 100%),
-      linear-gradient(135deg, #fefefe 0%, #fdfdfd 30%, #fefefe 100%);
-  }
 
   .left-page:active, .right-page:active {
     transform: scale(0.995);
