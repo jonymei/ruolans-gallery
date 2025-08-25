@@ -18,9 +18,21 @@ if (!story) {
   return Astro.redirect('/404');
 }
 
+// 构建故事页面的 OG 数据
+const storyTitle = `${story.config.title} - 若兰的AI故事书集锦`;
+const storyDescription = story.config.description || story.config.pages[0] || '一个精彩的故事...';
+const storyImageUrl = `${Astro.url.origin}${story.images.cover}`;
+const storyUrl = `${Astro.url.origin}/stories/${story.id}`;
+
 ---
 
-<Layout title={story.config.title}>
+<Layout 
+  title={storyTitle}
+  description={storyDescription}
+  ogImage={storyImageUrl}
+  ogUrl={storyUrl}
+  ogType="article"
+>
   <div id="story-container">
     <!-- 默认显示桌面版，通过客户端JS切换 -->
     <div id="desktop-reader">

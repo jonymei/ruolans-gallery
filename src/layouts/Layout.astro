@@ -2,11 +2,17 @@
 interface Props {
   title?: string;
   description?: string;
+  ogImage?: string;
+  ogUrl?: string;
+  ogType?: string;
 }
 
 const { 
   title = "若兰的AI故事书集锦", 
-  description = "为6岁女孩若兰创建的个人AI故事书展示网站，展示她创作的AI生成故事书作品。" 
+  description = "为6岁女孩若兰创建的个人AI故事书展示网站，展示她创作的AI生成故事书作品。",
+  ogImage,
+  ogUrl,
+  ogType = "website"
 } = Astro.props;
 ---
 
@@ -27,8 +33,17 @@ const {
     <!-- Open Graph Meta Tags -->
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content={ogType} />
     <meta property="og:locale" content="zh_CN" />
+    {ogImage && <meta property="og:image" content={ogImage} />}
+    {ogImage && <meta property="og:image:alt" content={title} />}
+    {ogUrl && <meta property="og:url" content={ogUrl} />}
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    {ogImage && <meta name="twitter:image" content={ogImage} />}
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
