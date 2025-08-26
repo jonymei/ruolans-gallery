@@ -10,13 +10,15 @@
     "tts": "node scripts/tts.js",
     "tts:all": "node scripts/tts.js all",
     "tts:status": "node scripts/tts.js status",
-    "import:gemini": "node scripts/import-gemini-story.js"
+    "import:gemini": "node scripts/import-gemini-story.js",
+    "bot": "node scripts/telegram-bot.js"
   },
   "dependencies": {
     "@astrojs/tailwind": "^6.0.2",
     "astro": "^5.13.2",
     "is-mobile": "^5.0.0",
     "js-yaml": "^4.1.0",
+    "node-telegram-bot-api": "^0.66.0",
     "tailwindcss": "^3.4.17"
   },
   "devDependencies": {

@@ -21,6 +21,10 @@ npm run build
 # Preview production build
 npm run preview
 
+# Story management commands
+npm run import:gemini <url>    # Import story from Gemini share link
+npm run bot                    # Start Telegram Bot for automated imports
+
 # Audio generation commands
 npm run tts story_001          # Generate audio for specific story
 npm run tts:all               # Generate audio for all stories
@@ -71,6 +75,15 @@ The project includes a TTS (Text-to-Speech) script using Minimax API:
 - Configure API credentials in `.env` file (MINIMAX_GROUPID, MINIMAX_API_KEY)
 - Generates high-quality Chinese audio for story narration
 - Detailed usage instructions in `scripts/README.md`
+
+## Telegram Bot Automation
+
+A Telegram Bot provides automated story import workflow:
+- Processes Gemini Storybook share links sent via Telegram
+- Automatically runs import, TTS generation, validation, and Git operations
+- Requires TELEGRAM_BOT_TOKEN and TELEGRAM_USER_ID in `.env` file
+- Start with `npm run bot` - uses Long Polling for message processing
+- Detailed setup guide in `scripts/BOT_README.md`
 
 ## Technology Stack
 
