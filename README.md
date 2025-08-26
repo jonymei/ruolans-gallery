@@ -1,6 +1,6 @@
 # 若兰的AI故事书集锦 (Ruolan's AI Storybook Gallery)
 
-为6岁女孩若兰创建的个人AI故事书展示网站，用于展示她创作的AI生成故事书作品。
+为6岁女孩若兰创建的个人AI故事书展示网站，用于展示她创作的AI生成故事书作品集。
 
 ## ✨ 已完成功能
 
@@ -32,31 +32,42 @@
 ├── public/
 │   ├── favicon.svg
 │   ├── stories/              # 故事图片目录
-│   │   └── story_001/
+│   │   └── 001/              # 3位数字故事ID
 │   │       ├── cover.png     # 封面图
 │   │       ├── 01.png        # 第1页
-│   │       └── ...
-│   └── audios/               # 故事音频目录（预留）
-│       └── story_001/
-│           ├── 01.mp3
-│           └── ...
+│   │       └── ... (01.png-10.png, +可选扩展)
+│   └── audios/               # 故事音频目录（可选）
+│       └── 001/
+│           ├── 01.mp3        # 第1页音频
+│           └── ... (01.mp3-10.mp3, +可选扩展)
 ├── src/
 │   ├── components/
 │   │   ├── HeroSection.astro
 │   │   ├── Navigation.astro
 │   │   ├── StoryCard.astro   # 故事卡片组件
 │   │   └── Welcome.astro
+│   │   └── story/
+│   │       ├── desktop/
+│   │       │   └── DesktopStoryReader.astro
+│   │       └── mobile/
+│   │           └── MobileStoryReader.astro
 │   ├── config/               # 故事配置文件
-│   │   └── story_001.yaml    # 故事内容配置
+│   │   └── 001.yaml          # 故事内容配置
 │   ├── layouts/
 │   │   └── Layout.astro
 │   ├── lib/
-│   │   └── stories.ts        # 故事数据处理
+│   │   ├── stories.ts        # 故事数据处理
+│   │   └── device.ts         # 设备检测
 │   └── pages/
 │       ├── index.astro       # 首页
 │       ├── 404.astro         # 404页面
+│       ├── about.astro       # 关于页面
 │       └── stories/
 │           └── [id].astro    # 动态故事阅读页
+├── scripts/
+│   ├── README.md            # 脚本使用说明
+│   ├── tts.js               # 文本转语音脚本
+│   └── import-gemini-story.js # Gemini故事导入脚本
 └── package.json
 ```
 
@@ -77,29 +88,45 @@ npm run dev
 npm run build
 ```
 
+### 预览生产版本
+```sh
+npm run preview
+```
+
 ## 📝 添加新故事
 
 查看 [故事添加指南](./STORY_GUIDE.md) 了解如何添加新的故事书。
 
 简单步骤：
-1. 在 `public/stories/story_XXX/` 添加图片文件
-2. 在 `src/config/story_XXX.yaml` 创建配置文件
-3. 重启开发服务器
+1. 在 `public/stories/XXX/` 添加图片文件（XXX为3位数字ID）
+2. 在 `src/config/XXX.yaml` 创建配置文件
+3. 可选：生成音频文件 `npm run tts XXX`
+4. 重启开发服务器
+
+## 🎯 已完成 ✅
+
+- [x] ✅ 添加音频文件和语音播放功能
+- [x] ✅ 性能优化（图片懒加载、预加载）
+- [x] ✅ SEO优化（Open Graph、Twitter Cards）
+- [x] ✅ 部署配置完成
 
 ## 🎯 下一步计划
 
-- [ ] 添加音频文件和语音播放功能
-- [ ] 性能优化（图片懒加载、预加载）
-- [ ] SEO优化
-- [ ] 部署到生产环境
+- [ ] 添加更多优质故事内容
+- [ ] 添加收藏/点赞功能
+- [ ] 添加故事分类和标签筛选
+- [ ] 添加搜索功能
+- [ ] 国际化支持（中英文切换）
 
 ## 🛠️ 技术栈
 
-- **框架：** Astro
+- **框架：** Astro 5.x
 - **样式：** Tailwind CSS + 自定义CSS
 - **语言：** TypeScript
 - **图标：** Lucide Icons
 - **配置：** YAML
+- **音频：** Minimax TTS API集成
+- **部署：** 静态部署就绪
 
 ## 🧞 命令说明
 
@@ -109,6 +136,9 @@ npm run build
 | `npm run dev`             | 启动开发服务器 `localhost:4321`                   |
 | `npm run build`           | 构建生产版本到 `./dist/`                          |
 | `npm run preview`         | 预览构建结果                                      |
+| `npm run tts story_xxx`   | 生成指定故事的音频（xxx为故事ID如001）            |
+| `npm run tts:all`        | 生成所有故事的音频                                |
+| `npm run tts:status`     | 查看音频生成状态                                  |
 | `npm run astro ...`       | 运行Astro CLI命令                                 |
 
 ## 💫 特性说明
@@ -123,14 +153,19 @@ npm run build
 - 触摸手势：左右滑动翻页（移动端）
 - 全屏阅读：沉浸式阅读体验
 
-### 音频功能（预留）
-- 支持每页独立音频文件
-- 播放/暂停控制
-- 播放速度调节
-- 自动翻页功能
+### 音频功能 ✅
+- ✅ 支持每页独立音频文件
+- ✅ 播放/暂停控制
+- ✅ 播放进度显示
+- ✅ 播放速度调节（0.5x - 2x）
+- ✅ 自动翻页功能
+- ✅ 连续播放功能
+- ✅ 音频同步滚动文字
 
 ---
 
 **项目作者：** GitHub Copilot  
 **创建时间：** 2025年8月21日  
-**版本：** v1.0
+**版本：** v2.0
+**故事数量：** 11篇  
+**音频状态：** 全部生成完成
