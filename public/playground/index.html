@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Playground</title>
+  <style>
+    :root {
+      --bg-top: #fff1de;
+      --bg-bottom: #ffd9e2;
+      --ink: #654754;
+      --muted: #8d6975;
+      --card: rgba(255, 255, 255, 0.72);
+      --border: rgba(214, 145, 166, 0.28);
+      --shadow: rgba(190, 131, 151, 0.22);
+      --peach: #ffb88c;
+      --pink: #ff88ad;
+      --blue: #73d9ff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      font-family: "Trebuchet MS", "Avenir Next", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.86), transparent 20%),
+        radial-gradient(circle at 84% 12%, rgba(255, 232, 188, 0.72), transparent 18%),
+        linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
+    }
+
+    body {
+      display: grid;
+      place-items: center;
+      padding: 28px;
+    }
+
+    .shell {
+      width: min(1080px, 100%);
+    }
+
+    .hero {
+      margin-bottom: 20px;
+      padding: 28px;
+      border: 1px solid var(--border);
+      border-radius: 30px;
+      background: rgba(255, 255, 255, 0.48);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 22px 60px var(--shadow);
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(36px, 6vw, 68px);
+      line-height: 0.95;
+      letter-spacing: -0.04em;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 680px;
+      font-size: 18px;
+      line-height: 1.6;
+      color: var(--muted);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 18px;
+    }
+
+    .card {
+      position: relative;
+      overflow: hidden;
+      min-height: 280px;
+      padding: 24px;
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      text-decoration: none;
+      color: inherit;
+      background: var(--card);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 20px 48px var(--shadow);
+      transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+    }
+
+    .card:hover {
+      transform: translateY(-4px) scale(1.01);
+      box-shadow: 0 24px 60px rgba(190, 131, 151, 0.28);
+      border-color: rgba(214, 145, 166, 0.5);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: white;
+    }
+
+    .badge.ocean {
+      background: linear-gradient(135deg, #2e89c7, #73d9ff);
+    }
+
+    .badge.snack {
+      background: linear-gradient(135deg, #ff8cac, #ffb16d);
+    }
+
+    .card h2 {
+      margin: 18px 0 10px;
+      font-size: 34px;
+      line-height: 1;
+    }
+
+    .card p {
+      margin: 0 0 20px;
+      max-width: 28ch;
+      line-height: 1.6;
+      color: var(--muted);
+    }
+
+    .enter {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: auto;
+      font-weight: 700;
+    }
+
+    .art {
+      position: absolute;
+      right: 16px;
+      bottom: 10px;
+      font-size: clamp(72px, 9vw, 108px);
+      opacity: 0.92;
+      transform: rotate(-6deg);
+      user-select: none;
+    }
+
+    .fishy::before,
+    .snakey::before,
+    .elephanty::before {
+      content: "";
+      position: absolute;
+      inset: auto auto -60px -40px;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      filter: blur(10px);
+      opacity: 0.56;
+    }
+
+    .fishy::before {
+      background: radial-gradient(circle, rgba(115, 217, 255, 0.52), transparent 68%);
+    }
+
+    .snakey::before {
+      background: radial-gradient(circle, rgba(255, 156, 188, 0.5), transparent 68%);
+    }
+
+    .elephanty::before {
+      background: radial-gradient(circle, rgba(107, 187, 232, 0.45), transparent 68%);
+    }
+
+    @media (max-width: 720px) {
+      body {
+        padding: 18px;
+      }
+
+      .hero {
+        padding: 22px;
+      }
+
+      .card {
+        min-height: 240px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <h1>Canvas Playground</h1>
+      <p>这里放当前的三个小页面：一个是会跟着鼠标游动的鱼群，一个是自己找食物吃的可爱贪吃蛇，还有一个会喷 emoji 派对弹的大象。直接点卡片进入。</p>
+    </section>
+
+    <section class="grid">
+      <a class="card fishy" href="/fish-school.html">
+        <span class="badge ocean">Ocean</span>
+        <h2>Fish School</h2>
+        <p>鱼群会自动结队游动，鼠标可以吸引它们，点击还能制造扰动。</p>
+        <span class="enter">进入页面 →</span>
+        <span class="art">🐟</span>
+      </a>
+
+      <a class="card snakey" href="/snake-snack.html">
+        <span class="badge snack">Snack</span>
+        <h2>Snack Snake</h2>
+        <p>小蛇会自动规划路线去找草莓，边吃边长，整体画风更软萌一点。</p>
+        <span class="enter">进入页面 →</span>
+        <span class="art">🍓</span>
+      </a>
+
+      <a class="card elephanty" href="/elephant-party.html">
+        <span class="badge ocean">Party</span>
+        <h2>Elephant Party</h2>
+        <p>右侧大象会跟着鼠标转鼻子，点击后从鼻尖喷出一串随机 emoji 派对弹。</p>
+        <span class="enter">进入页面 →</span>
+        <span class="art">🐘</span>
+      </a>
+    </section>
+  </main>
+</body>
+</html>

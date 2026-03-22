@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Snack Snake</title>
+  <style>
+    :root {
+      --sky-top: #ffe3ec;
+      --sky-bottom: #fff8e8;
+      --panel: rgba(255, 255, 255, 0.58);
+      --panel-border: rgba(215, 135, 161, 0.32);
+      --text: #6d4b57;
+      --muted: #9b7581;
+      --accent: #ff8db1;
+      --accent-strong: #ff6d9b;
+      --board: rgba(255, 250, 244, 0.78);
+      --board-shadow: rgba(231, 171, 188, 0.3);
+      --grid: rgba(255, 193, 209, 0.18);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 15% 18%, rgba(255, 255, 255, 0.88), transparent 18%),
+        radial-gradient(circle at 82% 14%, rgba(255, 239, 210, 0.9), transparent 18%),
+        linear-gradient(180deg, var(--sky-top), var(--sky-bottom));
+      font-family: "Trebuchet MS", "Comic Sans MS", "Marker Felt", cursive, sans-serif;
+    }
+
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    .hud {
+      position: fixed;
+      top: 18px;
+      left: 18px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      max-width: min(92vw, 540px);
+      pointer-events: none;
+    }
+
+    .panel {
+      padding: 14px 16px;
+      border: 1px solid var(--panel-border);
+      border-radius: 18px;
+      background: var(--panel);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 16px 38px rgba(201, 148, 164, 0.18);
+      color: var(--text);
+    }
+
+    .panel strong {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--accent-strong);
+      font-size: 14px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .panel span {
+      display: block;
+      font-size: 14px;
+      line-height: 1.45;
+      color: var(--muted);
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="hud">
+    <div class="panel">
+      <strong>Snack Snake</strong>
+      <span>小蛇会自己规划路线去找吃的。</span>
+      <span>点击画面可以额外丢一颗小草莓。</span>
+    </div>
+    <div class="panel">
+      <strong>状态</strong>
+      <span class="pill">已吃到 <b id="score">0</b> 颗点心</span>
+      <span class="pill">当前长度 <b id="length">4</b> 节</span>
+    </div>
+  </div>
+  <canvas id="scene"></canvas>
+  <script>
+    const canvas = document.getElementById("scene");
+    const ctx = canvas.getContext("2d");
+    const scoreEl = document.getElementById("score");
+    const lengthEl = document.getElementById("length");
+
+    const state = {
+      width: 0,
+      height: 0,
+      dpr: 1,
+      cell: 24,
+      cols: 24,
+      rows: 14,
+      boardX: 0,
+      boardY: 0,
+      boardWidth: 0,
+      boardHeight: 0,
+      snake: [],
+      foods: [],
+      particles: [],
+      currentDir: { x: 1, y: 0 },
+      score: 0,
+      tickMs: 112,
+      lastTick: 0,
+      lastTime: 0,
+      clouds: []
+    };
+
+    const DIRECTIONS = [
+      { x: 1, y: 0 },
+      { x: -1, y: 0 },
+      { x: 0, y: 1 },
+      { x: 0, y: -1 }
+    ];
+
+    function keyOf(point) {
+      return point.x + "," + point.y;
+    }
+
+    function resize() {
+      state.dpr = window.devicePixelRatio || 1;
+      state.width = window.innerWidth;
+      state.height = window.innerHeight;
+      canvas.width = state.width * state.dpr;
+      canvas.height = state.height * state.dpr;
+      canvas.style.width = state.width + "px";
+      canvas.style.height = state.height + "px";
+      ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+
+      const maxCell = Math.max(20, Math.min(30, Math.floor(Math.min(state.width, state.height) / 24)));
+      state.cell = maxCell;
+      state.cols = Math.max(14, Math.floor((state.width - 120) / state.cell));
+      state.rows = Math.max(10, Math.floor((state.height - 140) / state.cell));
+      state.boardWidth = state.cols * state.cell;
+      state.boardHeight = state.rows * state.cell;
+      state.boardX = Math.round((state.width - state.boardWidth) / 2);
+      state.boardY = Math.round((state.height - state.boardHeight) / 2);
+      buildClouds();
+      resetGame();
+    }
+
+    function buildClouds() {
+      const count = Math.max(5, Math.floor(state.width / 220));
+      state.clouds = Array.from({ length: count }, (_, index) => ({
+        x: (index / count) * state.width + Math.random() * 80,
+        y: 36 + Math.random() * Math.max(60, state.boardY - 20),
+        width: 60 + Math.random() * 70,
+        speed: 6 + Math.random() * 10
+      }));
+    }
+
+    function resetGame() {
+      const startX = Math.floor(state.cols / 2) - 2;
+      const startY = Math.floor(state.rows / 2);
+      state.snake = [
+        { x: startX, y: startY },
+        { x: startX - 1, y: startY },
+        { x: startX - 2, y: startY },
+        { x: startX - 3, y: startY }
+      ];
+      state.currentDir = { x: 1, y: 0 };
+      state.foods = [];
+      state.particles = [];
+      state.score = 0;
+      refillFoods();
+      syncHud();
+    }
+
+    function syncHud() {
+      scoreEl.textContent = String(state.score);
+      lengthEl.textContent = String(state.snake.length);
+    }
+
+    function randomFreeCell() {
+      const occupied = new Set(state.snake.map(keyOf));
+      for (const food of state.foods) occupied.add(keyOf(food));
+      const options = [];
+      for (let y = 0; y < state.rows; y++) {
+        for (let x = 0; x < state.cols; x++) {
+          if (!occupied.has(x + "," + y)) options.push({ x, y });
+        }
+      }
+      if (!options.length) return null;
+      return options[Math.floor(Math.random() * options.length)];
+    }
+
+    function refillFoods() {
+      while (state.foods.length < 3) {
+        const cell = randomFreeCell();
+        if (!cell) break;
+        state.foods.push(cell);
+      }
+    }
+
+    function inside(point) {
+      return point.x >= 0 && point.x < state.cols && point.y >= 0 && point.y < state.rows;
+    }
+
+    function nextHeadFrom(dir) {
+      return {
+        x: state.snake[0].x + dir.x,
+        y: state.snake[0].y + dir.y
+      };
+    }
+
+    function willGrow(point) {
+      return state.foods.some((food) => food.x === point.x && food.y === point.y);
+    }
+
+    function isSafe(point, growing) {
+      if (!inside(point)) return false;
+      const blocked = new Set(
+        state.snake
+          .slice(0, growing ? state.snake.length : state.snake.length - 1)
+          .map(keyOf)
+      );
+      return !blocked.has(keyOf(point));
+    }
+
+    function findPathToFood() {
+      const start = state.snake[0];
+      const goals = new Set(state.foods.map(keyOf));
+      const blocked = new Set(state.snake.slice(0, -1).map(keyOf));
+      blocked.delete(keyOf(start));
+      const queue = [start];
+      const seen = new Set([keyOf(start)]);
+      const parents = new Map();
+
+      while (queue.length) {
+        const current = queue.shift();
+        const currentKey = keyOf(current);
+        if (goals.has(currentKey)) {
+          const path = [current];
+          let cursor = currentKey;
+          while (parents.has(cursor)) {
+            const parent = parents.get(cursor);
+            path.push(parent);
+            cursor = keyOf(parent);
+          }
+          path.reverse();
+          return path;
+        }
+
+        const orderedDirs = DIRECTIONS.slice().sort((a, b) => {
+          const da = Math.abs(a.x - state.currentDir.x) + Math.abs(a.y - state.currentDir.y);
+          const db = Math.abs(b.x - state.currentDir.x) + Math.abs(b.y - state.currentDir.y);
+          return da - db;
+        });
+
+        for (const dir of orderedDirs) {
+          const next = { x: current.x + dir.x, y: current.y + dir.y };
+          const nextKey = keyOf(next);
+          if (!inside(next) || blocked.has(nextKey) || seen.has(nextKey)) continue;
+          seen.add(nextKey);
+          parents.set(nextKey, current);
+          queue.push(next);
+        }
+      }
+
+      return null;
+    }
+
+    function floodScore(from) {
+      const growing = willGrow(from);
+      if (!isSafe(from, growing)) return -1;
+      const blocked = new Set(
+        state.snake
+          .slice(0, growing ? state.snake.length : state.snake.length - 1)
+          .map(keyOf)
+      );
+      const startKey = keyOf(from);
+      blocked.delete(startKey);
+      const queue = [from];
+      const seen = new Set([startKey]);
+      let count = 0;
+
+      while (queue.length) {
+        const current = queue.shift();
+        count++;
+        for (const dir of DIRECTIONS) {
+          const next = { x: current.x + dir.x, y: current.y + dir.y };
+          const nextKey = keyOf(next);
+          if (!inside(next) || blocked.has(nextKey) || seen.has(nextKey)) continue;
+          seen.add(nextKey);
+          queue.push(next);
+        }
+      }
+
+      return count;
+    }
+
+    function chooseDirection() {
+      const path = findPathToFood();
+      if (path && path.length > 1) {
+        const next = path[1];
+        return { x: next.x - state.snake[0].x, y: next.y - state.snake[0].y };
+      }
+
+      let bestDir = state.currentDir;
+      let bestScore = -1;
+      for (const dir of DIRECTIONS) {
+        const next = nextHeadFrom(dir);
+        const grow = willGrow(next);
+        if (!isSafe(next, grow)) continue;
+        const area = floodScore(next);
+        const distance = state.foods.reduce((min, food) => {
+          const value = Math.abs(food.x - next.x) + Math.abs(food.y - next.y);
+          return Math.min(min, value);
+        }, Infinity);
+        const score = area * 100 - distance;
+        if (score > bestScore) {
+          bestScore = score;
+          bestDir = dir;
+        }
+      }
+      return bestDir;
+    }
+
+    function burst(point) {
+      for (let i = 0; i < 12; i++) {
+        state.particles.push({
+          x: state.boardX + point.x * state.cell + state.cell / 2,
+          y: state.boardY + point.y * state.cell + state.cell / 2,
+          vx: (Math.random() - 0.5) * 1.8,
+          vy: -1.8 - Math.random() * 1.6,
+          life: 24 + Math.random() * 18,
+          size: 4 + Math.random() * 4,
+          hue: Math.random() > 0.5 ? 345 : 35
+        });
+      }
+    }
+
+    function step() {
+      const dir = chooseDirection();
+      const next = nextHeadFrom(dir);
+      const growing = willGrow(next);
+      if (!isSafe(next, growing)) {
+        resetGame();
+        return;
+      }
+
+      state.currentDir = dir;
+      state.snake.unshift(next);
+
+      const foodIndex = state.foods.findIndex((food) => food.x === next.x && food.y === next.y);
+      if (foodIndex >= 0) {
+        state.foods.splice(foodIndex, 1);
+        state.score += 1;
+        burst(next);
+        refillFoods();
+      } else {
+        state.snake.pop();
+      }
+
+      syncHud();
+    }
+
+    function updateParticles(delta) {
+      const factor = delta / 16.6667;
+      state.particles = state.particles.filter((particle) => {
+        particle.x += particle.vx * factor;
+        particle.y += particle.vy * factor;
+        particle.vy += 0.08 * factor;
+        particle.life -= factor;
+        return particle.life > 0;
+      });
+    }
+
+    function drawCloud(cloud, time) {
+      const drift = ((cloud.x + time * cloud.speed * 0.02) % (state.width + cloud.width * 2)) - cloud.width;
+      ctx.save();
+      ctx.translate(drift, cloud.y);
+      ctx.fillStyle = "rgba(255, 255, 255, 0.72)";
+      ctx.beginPath();
+      ctx.arc(0, 10, cloud.width * 0.22, 0, Math.PI * 2);
+      ctx.arc(cloud.width * 0.2, 0, cloud.width * 0.28, 0, Math.PI * 2);
+      ctx.arc(cloud.width * 0.46, 12, cloud.width * 0.24, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawBackground(time) {
+      ctx.clearRect(0, 0, state.width, state.height);
+
+      for (const cloud of state.clouds) {
+        drawCloud(cloud, time);
+      }
+
+      ctx.save();
+      ctx.translate(state.boardX, state.boardY);
+
+      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--board");
+      ctx.strokeStyle = "rgba(230, 167, 187, 0.42)";
+      ctx.lineWidth = 2;
+      roundRect(ctx, 0, 0, state.boardWidth, state.boardHeight, 28);
+      ctx.shadowColor = getComputedStyle(document.documentElement).getPropertyValue("--board-shadow");
+      ctx.shadowBlur = 28;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.stroke();
+
+      ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue("--grid");
+      ctx.lineWidth = 1;
+      for (let x = 1; x < state.cols; x++) {
+        ctx.beginPath();
+        ctx.moveTo(x * state.cell, 0);
+        ctx.lineTo(x * state.cell, state.boardHeight);
+        ctx.stroke();
+      }
+      for (let y = 1; y < state.rows; y++) {
+        ctx.beginPath();
+        ctx.moveTo(0, y * state.cell);
+        ctx.lineTo(state.boardWidth, y * state.cell);
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    }
+
+    function roundRect(context, x, y, width, height, radius) {
+      context.beginPath();
+      context.moveTo(x + radius, y);
+      context.arcTo(x + width, y, x + width, y + height, radius);
+      context.arcTo(x + width, y + height, x, y + height, radius);
+      context.arcTo(x, y + height, x, y, radius);
+      context.arcTo(x, y, x + width, y, radius);
+      context.closePath();
+    }
+
+    function drawFood(food) {
+      const cx = state.boardX + food.x * state.cell + state.cell / 2;
+      const cy = state.boardY + food.y * state.cell + state.cell / 2;
+      const bounce = Math.sin((state.lastTime / 240) + food.x * 0.6 + food.y * 0.3) * 1.8;
+      const size = state.cell * 0.28;
+
+      ctx.save();
+      ctx.translate(cx, cy + bounce);
+      ctx.fillStyle = "#ff6c93";
+      ctx.beginPath();
+      ctx.moveTo(0, size * 1.2);
+      ctx.bezierCurveTo(size * 1.4, size * 0.3, size * 1.1, -size, 0, -size * 0.32);
+      ctx.bezierCurveTo(-size * 1.1, -size, -size * 1.4, size * 0.3, 0, size * 1.2);
+      ctx.fill();
+
+      ctx.fillStyle = "#70bf65";
+      ctx.beginPath();
+      ctx.ellipse(-size * 0.34, -size * 0.94, size * 0.34, size * 0.18, -0.5, 0, Math.PI * 2);
+      ctx.ellipse(size * 0.3, -size * 0.9, size * 0.34, size * 0.18, 0.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "rgba(255, 242, 211, 0.78)";
+      for (let i = 0; i < 4; i++) {
+        ctx.beginPath();
+        ctx.arc((i - 1.5) * size * 0.22, -size * 0.18 + (i % 2) * size * 0.24, size * 0.06, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function drawSnake() {
+      for (let i = state.snake.length - 1; i >= 0; i--) {
+        const segment = state.snake[i];
+        const isHead = i === 0;
+        const px = state.boardX + segment.x * state.cell + state.cell / 2;
+        const py = state.boardY + segment.y * state.cell + state.cell / 2;
+        const radius = isHead ? state.cell * 0.42 : state.cell * (0.37 - Math.min(i, 10) * 0.006);
+
+        ctx.save();
+        ctx.translate(px, py);
+
+        if (isHead) {
+          const angle = Math.atan2(state.currentDir.y, state.currentDir.x);
+          ctx.rotate(angle);
+        }
+
+        ctx.fillStyle = isHead ? "#ff9bbb" : i % 2 === 0 ? "#ffb7cd" : "#ffc8d8";
+        ctx.beginPath();
+        ctx.arc(0, 0, radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
+        ctx.beginPath();
+        ctx.arc(-radius * 0.28, -radius * 0.22, radius * 0.24, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (isHead) {
+          ctx.fillStyle = "#fff";
+          ctx.beginPath();
+          ctx.arc(radius * 0.18, -radius * 0.14, radius * 0.18, 0, Math.PI * 2);
+          ctx.arc(radius * 0.18, radius * 0.14, radius * 0.18, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = "#5b4654";
+          ctx.beginPath();
+          ctx.arc(radius * 0.22, -radius * 0.14, radius * 0.08, 0, Math.PI * 2);
+          ctx.arc(radius * 0.22, radius * 0.14, radius * 0.08, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.strokeStyle = "#d65e84";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(-radius * 0.08, 0, radius * 0.14, -0.4, 0.4);
+          ctx.stroke();
+
+          ctx.fillStyle = "rgba(255, 120, 150, 0.45)";
+          ctx.beginPath();
+          ctx.arc(0, -radius * 0.34, radius * 0.11, 0, Math.PI * 2);
+          ctx.arc(0, radius * 0.34, radius * 0.11, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.restore();
+      }
+    }
+
+    function drawParticles() {
+      for (const particle of state.particles) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, Math.min(1, particle.life / 30));
+        ctx.fillStyle = particle.hue === 345 ? "#ff8cac" : "#ffd36f";
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.size * (particle.life / 30), 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    function render(time) {
+      const delta = Math.min(32, time - state.lastTime || 16.6667);
+      state.lastTime = time;
+      updateParticles(delta);
+
+      while (time - state.lastTick >= state.tickMs) {
+        step();
+        state.lastTick += state.tickMs;
+      }
+
+      drawBackground(time);
+      for (const food of state.foods) drawFood(food);
+      drawSnake();
+      drawParticles();
+
+      requestAnimationFrame(render);
+    }
+
+    canvas.addEventListener("click", (event) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = event.clientX - rect.left - state.boardX;
+      const y = event.clientY - rect.top - state.boardY;
+      if (x < 0 || y < 0 || x >= state.boardWidth || y >= state.boardHeight) return;
+      const cell = {
+        x: Math.floor(x / state.cell),
+        y: Math.floor(y / state.cell)
+      };
+      const occupied = new Set([...state.snake.map(keyOf), ...state.foods.map(keyOf)]);
+      if (occupied.has(keyOf(cell))) return;
+      state.foods.push(cell);
+      if (state.foods.length > 5) state.foods.shift();
+    });
+
+    window.addEventListener("resize", resize);
+
+    resize();
+    state.lastTick = performance.now();
+    state.lastTime = state.lastTick;
+    requestAnimationFrame(render);
+  </script>
+</body>
+</html>

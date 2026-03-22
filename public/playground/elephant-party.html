@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Elephant Party</title>
+  <style>
+    :root {
+      --sky-top: #dff4ff;
+      --sky-bottom: #fff1d9;
+      --panel: rgba(255, 255, 255, 0.6);
+      --panel-border: rgba(117, 159, 194, 0.28);
+      --text: #476076;
+      --muted: #6d8193;
+      --accent: #ff8f78;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 15% 15%, rgba(255, 255, 255, 0.9), transparent 20%),
+        radial-gradient(circle at 70% 12%, rgba(255, 240, 186, 0.7), transparent 18%),
+        linear-gradient(180deg, var(--sky-top), var(--sky-bottom));
+      font-family: "Trebuchet MS", "Comic Sans MS", "Marker Felt", cursive, sans-serif;
+    }
+
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    .hud {
+      position: fixed;
+      top: 18px;
+      left: 18px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      max-width: min(92vw, 620px);
+      pointer-events: none;
+    }
+
+    .panel {
+      padding: 14px 16px;
+      border-radius: 18px;
+      border: 1px solid var(--panel-border);
+      background: var(--panel);
+      backdrop-filter: blur(12px);
+      color: var(--text);
+      box-shadow: 0 16px 36px rgba(118, 153, 178, 0.18);
+    }
+
+    .panel strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .panel span {
+      display: block;
+      line-height: 1.45;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="hud">
+    <div class="panel">
+      <strong>Elephant Party</strong>
+      <span>大象站在右边，鼻子会在面向左侧的半圆范围内跟着鼠标转动。</span>
+      <span>点击任意位置，就会从鼻尖喷出一串随机 emoji 派对弹。</span>
+    </div>
+    <div class="panel">
+      <strong>玩法</strong>
+      <span>移动鼠标瞄准方向，点击发射。</span>
+      <span>内容会随机混合水滴、食物和小动物。</span>
+    </div>
+  </div>
+  <canvas id="scene"></canvas>
+  <script>
+    const canvas = document.getElementById("scene");
+    const ctx = canvas.getContext("2d");
+
+    const state = {
+      width: 0,
+      height: 0,
+      dpr: 1,
+      pointer: { x: 0, y: 0 },
+      elephant: { x: 0, y: 0, size: 220, angle: Math.PI, targetAngle: Math.PI, trunkLength: 108 },
+      particles: [],
+      puffs: [],
+      stars: [],
+      grasses: [],
+      lastTime: 0
+    };
+
+    const EMOJIS = ["💦", "🫐", "🍓", "🍊", "🍪", "🥕", "🌽", "🐥", "🐸", "🦋", "🐟", "🐢", "🍬", "🌼", "✨"];
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function resize() {
+      state.dpr = window.devicePixelRatio || 1;
+      state.width = window.innerWidth;
+      state.height = window.innerHeight;
+      canvas.width = state.width * state.dpr;
+      canvas.height = state.height * state.dpr;
+      canvas.style.width = state.width + "px";
+      canvas.style.height = state.height + "px";
+      ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+
+      state.elephant.size = Math.max(180, Math.min(320, state.width * 0.2));
+      state.elephant.trunkLength = state.elephant.size * 0.54;
+      state.elephant.x = state.width - state.elephant.size * 0.66;
+      state.elephant.y = state.height * 0.62;
+
+      state.pointer.x = state.width * 0.35;
+      state.pointer.y = state.height * 0.45;
+      buildDecor();
+    }
+
+    function buildDecor() {
+      state.stars = Array.from({ length: Math.max(18, Math.floor(state.width / 70)) }, () => ({
+        x: Math.random() * state.width * 0.82,
+        y: 20 + Math.random() * state.height * 0.34,
+        emoji: Math.random() > 0.35 ? "✨" : "☁️",
+        size: 16 + Math.random() * 18,
+        drift: 0.4 + Math.random() * 1.2
+      }));
+
+      state.grasses = Array.from({ length: Math.max(16, Math.floor(state.width / 56)) }, (_, index) => ({
+        x: (index / Math.max(1, Math.floor(state.width / 56) - 1)) * state.width,
+        emoji: ["🌱", "🌼", "🍀", "🌷"][Math.floor(Math.random() * 4)],
+        size: 18 + Math.random() * 18,
+        sway: Math.random() * Math.PI * 2
+      }));
+    }
+
+    function getNosePosition() {
+      const baseX = state.elephant.x - state.elephant.size * 0.23;
+      const baseY = state.elephant.y - state.elephant.size * 0.12;
+      return {
+        x: baseX + Math.cos(state.elephant.angle) * state.elephant.trunkLength,
+        y: baseY + Math.sin(state.elephant.angle) * state.elephant.trunkLength
+      };
+    }
+
+    function aimAt(x, y) {
+      state.pointer.x = x;
+      state.pointer.y = y;
+      const baseX = state.elephant.x - state.elephant.size * 0.23;
+      const baseY = state.elephant.y - state.elephant.size * 0.12;
+      const raw = Math.atan2(y - baseY, x - baseX);
+      state.elephant.targetAngle = clamp(raw, Math.PI / 2, Math.PI * 1.5);
+    }
+
+    function spawnParty(x, y) {
+      aimAt(x, y);
+      const nose = getNosePosition();
+      const baseAngle = Math.atan2(y - nose.y, x - nose.x);
+
+      for (let i = 0; i < 26; i++) {
+        const angle = baseAngle + (Math.random() - 0.5) * 0.72;
+        const speed = 2.5 + Math.random() * 5.5;
+        const emoji = EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
+        state.particles.push({
+          x: nose.x,
+          y: nose.y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          gravity: 0.025 + Math.random() * 0.03,
+          spin: (Math.random() - 0.5) * 0.08,
+          rotation: (Math.random() - 0.5) * 0.6,
+          size: 20 + Math.random() * 18,
+          life: 90 + Math.random() * 30,
+          emoji
+        });
+      }
+
+      for (let i = 0; i < 10; i++) {
+        state.puffs.push({
+          x: nose.x,
+          y: nose.y,
+          vx: Math.cos(baseAngle + (Math.random() - 0.5) * 0.6) * (1.4 + Math.random() * 1.8),
+          vy: Math.sin(baseAngle + (Math.random() - 0.5) * 0.6) * (1.4 + Math.random() * 1.8),
+          radius: 10 + Math.random() * 18,
+          life: 28 + Math.random() * 16
+        });
+      }
+    }
+
+    function update(delta) {
+      const dt = delta / 16.6667;
+      const turn = state.elephant.targetAngle - state.elephant.angle;
+      state.elephant.angle += turn * Math.min(0.15 * dt, 0.25);
+
+      state.particles = state.particles.filter((particle) => {
+        particle.x += particle.vx * dt;
+        particle.y += particle.vy * dt;
+        particle.vy += particle.gravity * dt;
+        particle.rotation += particle.spin * dt;
+        particle.life -= dt;
+        return particle.life > 0;
+      });
+
+      state.puffs = state.puffs.filter((puff) => {
+        puff.x += puff.vx * dt;
+        puff.y += puff.vy * dt;
+        puff.radius += 0.36 * dt;
+        puff.life -= dt;
+        return puff.life > 0;
+      });
+    }
+
+    function drawBackdrop(time) {
+      ctx.clearRect(0, 0, state.width, state.height);
+
+      const hillY = state.height * 0.78;
+      ctx.fillStyle = "#cfeebe";
+      ctx.beginPath();
+      ctx.moveTo(0, state.height);
+      ctx.quadraticCurveTo(state.width * 0.2, hillY - 20, state.width * 0.38, hillY + 10);
+      ctx.quadraticCurveTo(state.width * 0.62, hillY + 40, state.width, hillY - 10);
+      ctx.lineTo(state.width, state.height);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = "#b8e2a7";
+      ctx.beginPath();
+      ctx.moveTo(0, state.height);
+      ctx.quadraticCurveTo(state.width * 0.28, hillY + 40, state.width * 0.5, hillY + 6);
+      ctx.quadraticCurveTo(state.width * 0.76, hillY - 24, state.width, hillY + 18);
+      ctx.lineTo(state.width, state.height);
+      ctx.closePath();
+      ctx.fill();
+
+      for (const star of state.stars) {
+        const bob = Math.sin(time * 0.001 * star.drift + star.x * 0.01) * 4;
+        ctx.save();
+        ctx.translate(star.x, star.y + bob);
+        ctx.font = `${star.size}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(star.emoji, 0, 0);
+        ctx.restore();
+      }
+
+      for (const grass of state.grasses) {
+        const sway = Math.sin(time * 0.0017 + grass.sway) * 5;
+        ctx.save();
+        ctx.translate(grass.x, state.height - 18);
+        ctx.rotate(sway * 0.02);
+        ctx.font = `${grass.size}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "bottom";
+        ctx.fillText(grass.emoji, 0, 0);
+        ctx.restore();
+      }
+    }
+
+    function drawElephant() {
+      const bounce = Math.sin(state.lastTime * 0.0032) * 5;
+      const elephantX = state.elephant.x;
+      const elephantY = state.elephant.y + bounce;
+
+      ctx.save();
+      ctx.translate(elephantX, elephantY);
+      ctx.font = `${state.elephant.size}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.shadowColor = "rgba(90, 123, 148, 0.22)";
+      ctx.shadowBlur = 20;
+      ctx.fillText("🐘", 0, 0);
+      ctx.shadowBlur = 0;
+
+      ctx.font = `${state.elephant.size * 0.15}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
+      ctx.fillText("🌸", state.elephant.size * 0.1, -state.elephant.size * 0.42);
+      ctx.fillText("✨", -state.elephant.size * 0.05, -state.elephant.size * 0.48);
+      ctx.restore();
+    }
+
+    function drawAim() {
+      const nose = getNosePosition();
+      ctx.save();
+      ctx.strokeStyle = "rgba(107, 187, 232, 0.28)";
+      ctx.lineWidth = 3;
+      ctx.setLineDash([8, 8]);
+      ctx.beginPath();
+      ctx.moveTo(nose.x, nose.y);
+      ctx.lineTo(state.pointer.x, state.pointer.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = "rgba(255, 143, 120, 0.18)";
+      ctx.beginPath();
+      ctx.arc(state.pointer.x, state.pointer.y, 18, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.font = `28px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("🎯", state.pointer.x, state.pointer.y);
+      ctx.restore();
+    }
+
+    function drawPuffs() {
+      for (const puff of state.puffs) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, puff.life / 36) * 0.6;
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.arc(puff.x, puff.y, puff.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    function drawParticles() {
+      for (const particle of state.particles) {
+        ctx.save();
+        ctx.translate(particle.x, particle.y);
+        ctx.rotate(particle.rotation);
+        ctx.globalAlpha = Math.max(0, particle.life / 110);
+        ctx.font = `${particle.size}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(particle.emoji, 0, 0);
+        ctx.restore();
+      }
+    }
+
+    function render(time) {
+      const delta = Math.min(32, time - state.lastTime || 16.6667);
+      state.lastTime = time;
+      update(delta);
+      drawBackdrop(time);
+      drawAim();
+      drawPuffs();
+      drawParticles();
+      drawElephant();
+      requestAnimationFrame(render);
+    }
+
+    window.addEventListener("mousemove", (event) => {
+      aimAt(event.clientX, event.clientY);
+    });
+
+    window.addEventListener("click", (event) => {
+      spawnParty(event.clientX, event.clientY);
+    });
+
+    window.addEventListener("resize", resize);
+
+    resize();
+    aimAt(state.pointer.x, state.pointer.y);
+    requestAnimationFrame(render);
+  </script>
+</body>
+</html>

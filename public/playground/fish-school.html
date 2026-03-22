@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fish School</title>
+  <style>
+    :root {
+      --bg-top: #041b2d;
+      --bg-bottom: #020912;
+      --glow: rgba(97, 218, 251, 0.14);
+      --text: rgba(236, 248, 255, 0.9);
+      --muted: rgba(179, 219, 240, 0.72);
+      --accent: #73e0ff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 20% 20%, var(--glow), transparent 28%),
+        radial-gradient(circle at 78% 32%, rgba(91, 171, 255, 0.12), transparent 24%),
+        linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+    }
+
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    .hud {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      padding: 14px 16px;
+      border: 1px solid rgba(115, 224, 255, 0.22);
+      border-radius: 16px;
+      background: rgba(2, 12, 22, 0.46);
+      backdrop-filter: blur(10px);
+      color: var(--text);
+      pointer-events: none;
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.22);
+    }
+
+    .hud strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 13px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .hud span {
+      display: block;
+      font-size: 14px;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="hud">
+    <strong>Fish School</strong>
+    <span>移动鼠标吸引鱼群，点击制造扰动</span>
+  </div>
+  <canvas id="ocean"></canvas>
+  <script>
+    const canvas = document.getElementById("ocean");
+    const ctx = canvas.getContext("2d");
+    const pointer = { x: 0, y: 0, active: false, pulse: 0 };
+    let width = 0;
+    let height = 0;
+    let fish = [];
+    let emojiSprites = new Map();
+
+    const CONFIG = {
+      count: 180,
+      maxSpeed: 2.4,
+      maxForce: 0.045,
+      sight: 58,
+      separation: 22,
+      mousePull: 0.028,
+      pulsePush: 0.22,
+      edgeTurn: 0.018
+    };
+
+    function resize() {
+      const dpr = window.devicePixelRatio || 1;
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      canvas.style.width = width + "px";
+      canvas.style.height = height + "px";
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    const FISH_EMOJIS = ["🐟", "🐠", "🐡", "🦈", "🐬"];
+
+    function buildEmojiSprites() {
+      emojiSprites = new Map();
+      for (const emoji of FISH_EMOJIS) {
+        for (const size of [20, 24, 28, 32, 36]) {
+          const sprite = document.createElement("canvas");
+          const padding = Math.ceil(size * 0.45);
+          const spriteSize = size + padding * 2;
+          sprite.width = spriteSize;
+          sprite.height = spriteSize;
+          const sctx = sprite.getContext("2d");
+          sctx.textAlign = "center";
+          sctx.textBaseline = "middle";
+          sctx.font = `${size}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
+          sctx.shadowColor = "rgba(115, 224, 255, 0.18)";
+          sctx.shadowBlur = 8;
+          sctx.fillText(emoji, spriteSize / 2, spriteSize / 2);
+          emojiSprites.set(`${emoji}-${size}`, sprite);
+        }
+      }
+    }
+
+    function snapSize(size) {
+      if (size < 22) return 20;
+      if (size < 26) return 24;
+      if (size < 30) return 28;
+      if (size < 34) return 32;
+      return 36;
+    }
+
+    function makeFish() {
+      fish = Array.from({ length: CONFIG.count }, () => ({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        vx: (Math.random() - 0.5) * 2,
+        vy: (Math.random() - 0.5) * 2,
+        hue: 185 + Math.random() * 40,
+        size: 18 + Math.random() * 16,
+        spriteSize: 0,
+        emoji: FISH_EMOJIS[Math.floor(Math.random() * FISH_EMOJIS.length)]
+      }));
+      for (const f of fish) {
+        f.spriteSize = snapSize(f.size);
+      }
+    }
+
+    function limit(vec, max) {
+      const mag = Math.hypot(vec.x, vec.y);
+      if (mag > max && mag > 0) {
+        vec.x = (vec.x / mag) * max;
+        vec.y = (vec.y / mag) * max;
+      }
+      return vec;
+    }
+
+    function updateFish(f) {
+      let alignX = 0;
+      let alignY = 0;
+      let cohX = 0;
+      let cohY = 0;
+      let sepX = 0;
+      let sepY = 0;
+      let neighbors = 0;
+
+      for (const other of fish) {
+        if (other === f) continue;
+        const dx = other.x - f.x;
+        const dy = other.y - f.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist === 0 || dist > CONFIG.sight) continue;
+
+        alignX += other.vx;
+        alignY += other.vy;
+        cohX += other.x;
+        cohY += other.y;
+        neighbors++;
+
+        if (dist < CONFIG.separation) {
+          sepX -= dx / dist;
+          sepY -= dy / dist;
+        }
+      }
+
+      let ax = 0;
+      let ay = 0;
+
+      if (neighbors > 0) {
+        alignX /= neighbors;
+        alignY /= neighbors;
+        const alignForce = limit({ x: alignX - f.vx, y: alignY - f.vy }, CONFIG.maxForce);
+        ax += alignForce.x * 0.9;
+        ay += alignForce.y * 0.9;
+
+        cohX = cohX / neighbors - f.x;
+        cohY = cohY / neighbors - f.y;
+        const cohesionForce = limit({ x: cohX, y: cohY }, CONFIG.maxForce);
+        ax += cohesionForce.x * 0.65;
+        ay += cohesionForce.y * 0.65;
+
+        const separationForce = limit({ x: sepX, y: sepY }, CONFIG.maxForce);
+        ax += separationForce.x * 1.35;
+        ay += separationForce.y * 1.35;
+      }
+
+      if (pointer.active) {
+        const dx = pointer.x - f.x;
+        const dy = pointer.y - f.y;
+        const dist = Math.hypot(dx, dy) || 1;
+        if (dist < 220) {
+          ax += (dx / dist) * CONFIG.mousePull;
+          ay += (dy / dist) * CONFIG.mousePull;
+        }
+      }
+
+      if (pointer.pulse > 0) {
+        const dx = f.x - pointer.x;
+        const dy = f.y - pointer.y;
+        const dist = Math.hypot(dx, dy) || 1;
+        if (dist < 180) {
+          const force = (1 - dist / 180) * CONFIG.pulsePush * pointer.pulse;
+          ax += (dx / dist) * force;
+          ay += (dy / dist) * force;
+        }
+      }
+
+      if (f.x < 80) ax += CONFIG.edgeTurn;
+      if (f.x > width - 80) ax -= CONFIG.edgeTurn;
+      if (f.y < 80) ay += CONFIG.edgeTurn;
+      if (f.y > height - 80) ay -= CONFIG.edgeTurn;
+
+      f.vx += ax;
+      f.vy += ay;
+      const velocity = limit({ x: f.vx, y: f.vy }, CONFIG.maxSpeed);
+      f.vx = velocity.x;
+      f.vy = velocity.y;
+      f.x += f.vx;
+      f.y += f.vy;
+    }
+
+    function drawFish(f) {
+      const angle = Math.atan2(f.vy, f.vx);
+      const sprite = emojiSprites.get(`${f.emoji}-${f.spriteSize}`);
+      if (!sprite) return;
+      ctx.save();
+      ctx.translate(f.x, f.y);
+      ctx.rotate(angle);
+      ctx.drawImage(sprite, -sprite.width / 2, -sprite.height / 2);
+      ctx.restore();
+    }
+
+    function drawBackdrop(time) {
+      ctx.clearRect(0, 0, width, height);
+
+      for (let i = 0; i < 14; i++) {
+        const x = (i * 137 + time * 0.012) % (width + 200) - 100;
+        const y = (i * 91) % height;
+        const radius = 90 + (i % 4) * 24;
+        const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+        gradient.addColorStop(0, "rgba(88, 204, 255, 0.07)");
+        gradient.addColorStop(1, "rgba(88, 204, 255, 0)");
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      if (pointer.active || pointer.pulse > 0.02) {
+        ctx.beginPath();
+        ctx.arc(pointer.x, pointer.y, 24 + 42 * pointer.pulse, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(115, 224, 255, ${0.22 * (pointer.pulse + 0.25)})`;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+    }
+
+    function frame(time) {
+      drawBackdrop(time);
+      pointer.pulse *= 0.94;
+      for (const f of fish) {
+        updateFish(f);
+        drawFish(f);
+      }
+      requestAnimationFrame(frame);
+    }
+
+    window.addEventListener("resize", () => {
+      resize();
+      makeFish();
+    });
+
+    window.addEventListener("pointermove", (event) => {
+      pointer.x = event.clientX;
+      pointer.y = event.clientY;
+      pointer.active = true;
+    });
+
+    window.addEventListener("pointerleave", () => {
+      pointer.active = false;
+    });
+
+    window.addEventListener("click", (event) => {
+      pointer.x = event.clientX;
+      pointer.y = event.clientY;
+      pointer.pulse = 1;
+    });
+
+    resize();
+    buildEmojiSprites();
+    makeFish();
+    requestAnimationFrame(frame);
+  </script>
+</body>
+</html>

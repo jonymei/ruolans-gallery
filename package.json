@@ -2,6 +2,7 @@
   "name": "ruolans-gallery",
   "type": "module",
   "version": "0.0.1",
+  "description": "若兰的创意集锦 - 6岁女孩的AI故事书和创意小游戏展示网站",
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",

@@ -1,0 +1,105 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Navigation from '../../components/Navigation.astro';
+
+const games = [
+  {
+    title: "Fish School",
+    emoji: "🐟",
+    description: "鱼群会自动结队游动，鼠标可以吸引它们，点击还能制造扰动。",
+    href: "/playground/fish-school.html",
+    borderColor: "border-blue-100",
+    hoverColor: "hover:text-blue-600",
+    hoverBorder: "hover:border-blue-200"
+  },
+  {
+    title: "Snack Snake",
+    emoji: "🍓",
+    description: "小蛇会自动规划路线去找草莓，边吃边长，整体画风更软萌一点。",
+    href: "/playground/snake-snack.html",
+    borderColor: "border-pink-100",
+    hoverColor: "hover:text-pink-600",
+    hoverBorder: "hover:border-pink-200"
+  },
+  {
+    title: "Elephant Party",
+    emoji: "🐘",
+    description: "右侧大象会跟着鼠标转鼻子，点击后从鼻尖喷出一串随机 emoji 派对弹。",
+    href: "/playground/elephant-party.html",
+    borderColor: "border-purple-100",
+    hoverColor: "hover:text-purple-600",
+    hoverBorder: "hover:border-purple-200"
+  }
+];
+---
+
+<Layout 
+  title="创意小游戏 - 若兰的创意集锦" 
+  description="若兰用AI创造的互动小游戏合集，包括鱼群、贪吃蛇和大象派对等创意作品。"
+>
+  <Navigation />
+  
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <div class="text-center mb-12">
+      <h1 class="text-4xl font-bold text-gray-800 mb-4">
+        🎮 创意小游戏 🎮
+      </h1>
+      <p class="text-gray-600 max-w-2xl mx-auto text-lg">
+        若兰用AI创造的互动小游戏，每一个都充满了创意和乐趣。
+        点击卡片开始玩耍吧！
+      </p>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      {games.map((game) => (
+        <a 
+          href={game.href} 
+          class={`group block bg-white/60 backdrop-blur-sm rounded-3xl p-8 shadow-sm border ${game.borderColor} ${game.hoverBorder} hover:shadow-lg transition-all duration-300`}
+        >
+          <div class="text-6xl mb-6">{game.emoji}</div>
+          <h2 class={`text-2xl font-bold text-gray-800 mb-3 ${game.hoverColor} transition-colors`}>
+            {game.title}
+          </h2>
+          <p class="text-gray-600">{game.description}</p>
+          <div class="mt-6 flex items-center text-sm font-medium text-gray-500 group-hover:text-gray-700 transition-colors">
+            开始游戏
+            <svg class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+            </svg>
+          </div>
+        </a>
+      ))}
+    </div>
+    
+    <div class="text-center mt-16">
+      <a 
+        href="/" 
+        class="inline-flex items-center px-6 py-3 bg-white/60 backdrop-blur-sm rounded-full shadow-sm border border-pink-100 hover:shadow-md transition-all duration-300"
+      >
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+        </svg>
+        <span class="text-gray-700">返回首页</span>
+      </a>
+    </div>
+  </main>
+  
+  <footer class="bg-white/40 backdrop-blur-sm border-t border-pink-100 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center">
+        <p class="text-gray-500 text-sm">
+          ❤️ 由若兰创作，充满爱与想象力的创意世界 ❤️
+        </p>
+        <p class="text-gray-400 text-xs mt-2">
+          © 2025 若兰的创意集锦. 保留所有权利.
+        </p>
+      </div>
+    </div>
+  </footer>
+</Layout>
+
+<style>
+  main {
+    min-height: 70vh;
+  }
+</style>

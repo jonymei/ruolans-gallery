@@ -3,7 +3,7 @@ interface Props {
   title?: string;
 }
 
-const { title = "若兰的AI故事书集锦" } = Astro.props;
+const { title = "若兰的创意集锦" } = Astro.props;
 ---
 
 <nav class="bg-white/80 backdrop-blur-md border-b border-pink-100 sticky top-0 z-50">
@@ -24,6 +24,12 @@ const { title = "若兰的AI故事书集锦" } = Astro.props;
 
       <!-- 导航链接 -->
       <div class="flex items-center space-x-6">
+        <a 
+          href="/playground" 
+          class="text-gray-700 hover:text-pink-600 transition-colors font-medium"
+        >
+          🎮 游戏
+        </a>
         <a 
           href="/about" 
           class="text-gray-700 hover:text-pink-600 transition-colors font-medium"

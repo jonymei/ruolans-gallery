@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Ruolan's AI Storybook Gallery is a personal storytelling website showcasing AI-generated children's stories for a 6-year-old girl named Ruolan. It's built with Astro, TypeScript, and Tailwind CSS.
+Ruolan's Creative Gallery is a personal creative portfolio website showcasing AI-generated children's stories and interactive mini-games for a 6-year-old girl named Ruolan. It's built with Astro, TypeScript, and Tailwind CSS.
 
 ## Development Commands
 

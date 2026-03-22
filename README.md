@@ -1,6 +1,6 @@
-# 若兰的AI故事书集锦 (Ruolan's AI Storybook Gallery)
+# 若兰的创意集锦 (Ruolan's Creative Gallery)
 
-为6岁女孩若兰创建的个人AI故事书展示网站，用于展示她创作的AI生成故事书作品集。
+为6岁女孩若兰创建的个人创意作品展示网站，用于展示她创作的AI生成故事书和互动小游戏作品集。
 
 ## ✨ 已完成功能
 
@@ -9,6 +9,13 @@
 - ✅ 网格布局，响应式设计
 - ✅ 故事卡片hover效果
 - ✅ 故事元信息展示（标题、作者、描述、日期）
+
+### 🎮 创意小游戏
+- ✅ Fish School - 鱼群跟随鼠标游动
+- ✅ Snack Snake - 贪吃蛇自动找食物
+- ✅ Elephant Party - 大象喷emoji派对弹
+- ✅ 游戏列表页面
+- ✅ 首页游戏区域展示
 
 ### 📖 故事书阅读器
 - ✅ 完整的故事书阅读体验
@@ -36,10 +43,15 @@
 │   │       ├── cover.png     # 封面图
 │   │       ├── 01.png        # 第1页
 │   │       └── ... (01.png-10.png, +可选扩展)
-│   └── audios/               # 故事音频目录（可选）
-│       └── 001/
-│           ├── 01.mp3        # 第1页音频
-│           └── ... (01.mp3-10.mp3, +可选扩展)
+│   ├── audios/               # 故事音频目录（可选）
+│   │   └── 001/
+│   │       ├── 01.mp3        # 第1页音频
+│   │       └── ... (01.mp3-10.mp3, +可选扩展)
+│   └── playground/           # 创意小游戏目录
+│       ├── index.html        # 游戏首页
+│       ├── fish-school.html  # 鱼群游戏
+│       ├── snake-snack.html  # 贪吃蛇游戏
+│       └── elephant-party.html # 大象派对游戏
 ├── src/
 │   ├── components/
 │   │   ├── HeroSection.astro
@@ -62,12 +74,15 @@
 │       ├── index.astro       # 首页
 │       ├── 404.astro         # 404页面
 │       ├── about.astro       # 关于页面
+│       ├── playground/
+│       │   └── index.astro   # 游戏列表页面
 │       └── stories/
 │           └── [id].astro    # 动态故事阅读页
 ├── scripts/
 │   ├── README.md            # 脚本使用说明
 │   ├── tts.js               # 文本转语音脚本
-│   └── import-gemini-story.js # Gemini故事导入脚本
+│   ├── import-gemini-story.js # Gemini故事导入脚本
+│   └── web-server.mjs       # 静态文件服务器（备用）
 └── package.json
 ```
 
@@ -113,6 +128,7 @@ npm run preview
 ## 🎯 下一步计划
 
 - [ ] 添加更多优质故事内容
+- [ ] 添加更多创意小游戏
 - [ ] 添加收藏/点赞功能
 - [ ] 添加故事分类和标签筛选
 - [ ] 添加搜索功能
@@ -153,6 +169,11 @@ npm run preview
 - 触摸手势：左右滑动翻页（移动端）
 - 全屏阅读：沉浸式阅读体验
 
+### 游戏特性
+- Canvas 动画：流畅的HTML5 Canvas游戏
+- 鼠标交互：跟随鼠标、点击响应
+- 响应式设计：适配不同屏幕尺寸
+
 ### 音频功能 ✅
 - ✅ 支持每页独立音频文件
 - ✅ 播放/暂停控制
@@ -166,6 +187,7 @@ npm run preview
 
 **项目作者：** GitHub Copilot  
 **创建时间：** 2025年8月21日  
-**版本：** v2.0
+**版本：** v2.1
 **故事数量：** 11篇  
+**游戏数量：** 3个
 **音频状态：** 全部生成完成

@@ -10,8 +10,8 @@ const stories = await getAllStories();
 ---
 
 <Layout 
-  title="若兰的AI故事书集锦" 
-  description="欢迎来到6岁女孩若兰的神奇世界！这里收录了她创作的AI故事书，每一个故事都充满了童真与想象力。"
+  title="若兰的创意集锦" 
+  description="欢迎来到6岁女孩若兰的神奇世界！这里收录了她创作的AI故事书和创意小游戏，每一个作品都充满了童真与想象力。"
 >
   <!-- 导航栏 -->
   <Navigation />
@@ -39,6 +39,38 @@ const stories = await getAllStories();
       ))}
     </div>
     
+    <!-- 游戏区域 -->
+    <div class="mt-20">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl font-bold text-gray-800 mb-4">
+          🎮 创意小游戏 🎮
+        </h2>
+        <p class="text-gray-600 max-w-2xl mx-auto">
+          若兰用AI创造的互动小游戏，点击卡片开始玩耍吧！
+        </p>
+      </div>
+      
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        <a href="/playground/fish-school.html" class="group block bg-white/60 backdrop-blur-sm rounded-3xl p-6 shadow-sm border border-blue-100 hover:shadow-lg hover:border-blue-200 transition-all duration-300">
+          <div class="text-5xl mb-4">🐟</div>
+          <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-blue-600 transition-colors">Fish School</h3>
+          <p class="text-gray-600 text-sm">鱼群会自动结队游动，鼠标可以吸引它们，点击还能制造扰动。</p>
+        </a>
+        
+        <a href="/playground/snake-snack.html" class="group block bg-white/60 backdrop-blur-sm rounded-3xl p-6 shadow-sm border border-pink-100 hover:shadow-lg hover:border-pink-200 transition-all duration-300">
+          <div class="text-5xl mb-4">🍓</div>
+          <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-pink-600 transition-colors">Snack Snake</h3>
+          <p class="text-gray-600 text-sm">小蛇会自动规划路线去找草莓，边吃边长，整体画风更软萌一点。</p>
+        </a>
+        
+        <a href="/playground/elephant-party.html" class="group block bg-white/60 backdrop-blur-sm rounded-3xl p-6 shadow-sm border border-purple-100 hover:shadow-lg hover:border-purple-200 transition-all duration-300">
+          <div class="text-5xl mb-4">🐘</div>
+          <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-purple-600 transition-colors">Elephant Party</h3>
+          <p class="text-gray-600 text-sm">右侧大象会跟着鼠标转鼻子，点击后从鼻尖喷出一串随机 emoji 派对弹。</p>
+        </a>
+      </div>
+    </div>
+    
     <!-- 底部提示 -->
     <div class="text-center mt-16">
       <div class="inline-flex items-center px-6 py-3 bg-white/60 backdrop-blur-sm rounded-full shadow-sm border border-pink-100">
@@ -46,7 +78,7 @@ const stories = await getAllStories();
           <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
         </svg>
         <span class="text-sm text-gray-600">
-          更多精彩故事正在创作中，敬请期待...
+          更多精彩作品正在创作中，敬请期待...
         </span>
       </div>
     </div>
@@ -57,10 +89,10 @@ const stories = await getAllStories();
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="text-center">
         <p class="text-gray-500 text-sm">
-          ❤️ 由若兰创作，充满爱与想象力的故事世界 ❤️
+          ❤️ 由若兰创作，充满爱与想象力的创意世界 ❤️
         </p>
         <p class="text-gray-400 text-xs mt-2">
-          © 2025 若兰的AI故事书集锦. 保留所有权利.
+          © 2025 若兰的创意集锦. 保留所有权利.
         </p>
       </div>
     </div>
